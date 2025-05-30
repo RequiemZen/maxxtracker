@@ -35,11 +35,13 @@ const UserSchedulePage = () => {
   const router = useRouter(); // Initialize useRouter
 
   useEffect(() => {
-    // Fetch general schedule items (same for all users)
-    fetchGeneralScheduleItems();
+    // Fetch general schedule items FOR THE TARGET USER
+    if (userId) {
+      fetchGeneralScheduleItems(userId);
+    }
     // Fetch the target user's username
     fetchUsername(userId);
-  }, [userId]); // Refetch if userId changes (though in this route it won't)
+  }, [userId]); // Refetch if userId changes
 
   useEffect(() => {
     // Fetch schedule items for the selected date and target user
@@ -48,12 +50,12 @@ const UserSchedulePage = () => {
     }
   }, [userId, selectedDate]); // Refetch when userId or selected date changes
 
-  const fetchGeneralScheduleItems = async () => {
+  const fetchGeneralScheduleItems = async (id: string) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return setError('Authentication token not found.');
 
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule`, {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule/${id}`, {
         headers: { 'x-auth-token': token },
       });
       setGeneralScheduleItems(res.data);
@@ -111,12 +113,12 @@ const UserSchedulePage = () => {
         }
       });
 
-      // Filter items to only include those for the exact selected day (based on UTC comparison)
-      const itemsForSelectedDay = res.data.filter((item: ScheduleItem) =>
-        isSameDay(new Date(item.date), startOfSelectedDayUTC) // Compare with startOfSelectedDayUTC
+      // Filter items to only include those for the exact selected day AND the current user (based on UTC comparison)
+      const itemsForSelectedDayAndUser = res.data.filter((item: ScheduleItem) =>
+        isSameDay(new Date(item.date), startOfSelectedDayUTC) && item.user === id
       );
 
-      setScheduleItems(itemsForSelectedDay);
+      setScheduleItems(itemsForSelectedDayAndUser);
 
     } catch (err: any) {
       console.error('Error fetching schedule items for user:', err.response?.data || err.message);
@@ -129,7 +131,7 @@ const UserSchedulePage = () => {
   // Helper to get the schedule item for a general item on the selected day
   const getScheduleItemForSelectedDay = (description: string): ScheduleItem | undefined => {
     return scheduleItems.find(item =>
-      isSameDay(new Date(item.date), selectedDate) && item.description === description
+      isSameDay(new Date(item.date), selectedDate) && item.description === description && item.user === userId
     );
   };
 
