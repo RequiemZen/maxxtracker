@@ -21,6 +21,32 @@ interface ScheduleItem {
   status?: string;
 }
 
+// Добавляем функцию generateStaticParams для статического экспорта
+export async function generateStaticParams() {
+  try {
+    // Запрос к API для получения всех пользователей
+    // Важно: Этот запрос выполняется во время сборки.
+    // Если API требует аутентификации даже для списка ID, это может потребовать другой стратегии.
+    // Предполагаем, что список пользователей (или только их ID) доступен без токена для статического экспорта.
+    // Если ваш API требует токен даже для этого, возможно, потребуется временное отключение
+    // аутентификации для этого эндпоинта во время сборки, или использование другого метода.
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/users`);
+    const users = res.data;
+
+    // Возвращаем массив объектов в формате { userId: string }
+    return users.map((user: { _id: string }) => ({
+      userId: user._id,
+    }));
+  } catch (error) {
+    console.error('Error generating static params for users:', error);
+    // В случае ошибки при сборке, можно вернуть пустой массив или позволить сборке упасть,}
+    // в зависимости от того, как вы хотите обрабатывать ошибки сборки.
+    // Для продолжения сборки можно вернуть пустой массив, но тогда страницы пользователей не будут сгенерированы.
+    // Лучше позволить упасть, если данные для статических страниц недоступны.
+    throw new Error('Failed to fetch users for static params generation.');
+  }
+}
+
 const UserSchedulePage = () => {
   const params = useParams();
   const userId = params.userId as string; // Get userId from URL
