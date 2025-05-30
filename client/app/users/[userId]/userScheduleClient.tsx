@@ -6,7 +6,7 @@ import { format, isSameDay, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface GeneralScheduleItem {
   _id: string;
@@ -40,10 +40,6 @@ interface UserScheduleClientProps {
 }
 
 const UserScheduleClient: React.FC<UserScheduleClientProps> = ({ userId }) => {
-  const params = useParams();
-  // userId теперь получаем через props, а не useParams
-  // const userId = params.userId as string;
-
   const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
   const [generalScheduleItems, setGeneralScheduleItems] = useState<GeneralScheduleItem[]>([]);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
