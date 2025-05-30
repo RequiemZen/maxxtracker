@@ -40,9 +40,9 @@ const SetupPage = () => {
         },
       });
       setScheduleItems(res.data);
-    } catch (err: unknown) {
-      console.error('Error fetching general schedule:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch schedule items.');
+    } catch (err: any) {
+      console.error(err.response?.data || err.message);
+      setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items.');
     } finally {
       setLoading(false);
     }
@@ -85,9 +85,9 @@ const SetupPage = () => {
       setScheduleItems([...scheduleItems, res.data]);
       setDescription('');
       setError(null);
-    } catch (err: unknown) {
-      console.error(err);
-      setInputError(err instanceof Error ? err.message : 'Failed to add schedule item.');
+    } catch (err: any) {
+      console.error(err.response?.data || err.message);
+      setInputError(err.response?.data?.msg || err.message || 'Failed to add schedule item.');
     }
   };
 
@@ -105,9 +105,9 @@ const SetupPage = () => {
       });
       setScheduleItems(scheduleItems.filter(item => item._id !== id));
       setError(null);
-    } catch (err: unknown) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : 'Failed to delete schedule item.');
+    } catch (err: any) {
+      console.error(err.response?.data || err.message);
+      setError(err.response?.data?.msg || err.message || 'Failed to delete schedule item.');
     }
   };
 

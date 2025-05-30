@@ -31,9 +31,9 @@ const UsersPage = () => {
                     headers: { 'x-auth-token': token },
                 });
                 setUsers(res.data);
-            } catch (err: unknown) {
-                console.error('Error fetching users:', err);
-                setError(err instanceof Error ? err.message : 'Failed to fetch users.');
+            } catch (err: any) {
+                console.error('Error fetching users:', err.response?.data || err.message);
+                setError(err.response?.data?.msg || err.message || 'Failed to fetch users.');
             } finally {
                 setLoading(false);
             }
