@@ -73,4 +73,28 @@ router.delete('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, 
         res.status(500).send('Server Error');
     }
 }));
+// @route   GET api/general-schedule/:userId
+// @desc    Get all general schedule items for a specific user by ID
+// @access  Private (consider if this should be public or restricted)
+router.get('/:userId', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Получаем userId из параметров URL
+        const targetUserId = req.params.userId;
+        // Находим пункты общего расписания для указанного пользователя
+        const generalScheduleItems = yield GeneralScheduleItem_1.default.find({ user: targetUserId }).sort({ createdAt: 1 });
+        // Проверяем, найдены ли пункты
+        if (!generalScheduleItems) {
+            return res.status(404).json({ msg: 'General schedule items not found for this user' });
+        }
+        res.json(generalScheduleItems);
+    }
+    catch (err) {
+        console.error(err.message);
+        // Обрабатываем случай, если userId не является валидным ObjectId
+        if (err.kind === 'ObjectId') {
+            return res.status(404).json({ msg: 'Invalid user ID' });
+        }
+        res.status(500).send('Server Error');
+    }
+}));
 exports.default = router;
