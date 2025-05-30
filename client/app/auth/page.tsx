@@ -50,13 +50,13 @@ const AuthPage = () => {
       // Redirect to the main page (e.g., home)
       router.push('/');
 
-    } catch (err: any) {
-      console.error(err.response?.data || err.message);
+    } catch (err: unknown) {
+      console.error(err);
       // For API errors, you might still want a different notification,
       // but for now, we'll just log it or could set inputError with a generic message.
       // setInputError('Ошибка сервера. Пожалуйста, попробуйте позже.');
       // Or a more specific error message from the backend:
-      setInputError(err.response?.data?.message || 'Произошла ошибка при входе.');
+      setInputError(err instanceof Error ? err.message : 'Произошла ошибка при входе.');
     }
   };
 

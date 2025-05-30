@@ -50,9 +50,9 @@ const CheckinPage = () => {
         headers: { 'x-auth-token': token },
       });
       setGeneralScheduleItems(res.data);
-    } catch (err: any) {
-      console.error('Error fetching general schedule:', err.response?.data || err.message);
-      setError(err.response?.data?.msg || err.message || 'Failed to fetch general schedule.');
+    } catch (err: unknown) {
+      console.error('Error fetching general schedule:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch general schedule.');
     }
   };
 
@@ -89,9 +89,9 @@ const CheckinPage = () => {
 
       setScheduleItems(itemsForSelectedDay);
 
-    } catch (err: any) {
-      console.error('Error fetching schedule items for date:', err.response?.data || err.message);
-      setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items for date.');
+    } catch (err: unknown) {
+      console.error('Error fetching schedule items for date:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch schedule items for date.');
     } finally {
       setLoading(false);
     }
@@ -164,9 +164,9 @@ const CheckinPage = () => {
 
       setError(null); // Clear errors on success
 
-    } catch (err: any) {
-      console.error('Error during check-in toggle:', err.response?.data || err.message);
-      setError(err.response?.data?.msg || err.message || 'Failed to toggle check-in status.');
+    } catch (err: unknown) {
+      console.error('Error during check-in toggle:', err);
+      setError(err instanceof Error ? err.message : 'Failed to toggle check-in status.');
     }
   };
 

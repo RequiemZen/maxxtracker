@@ -57,9 +57,9 @@ const UserSchedulePage = () => {
         headers: { 'x-auth-token': token },
       });
       setGeneralScheduleItems(res.data);
-    } catch (err: any) {
-      console.error('Error fetching general schedule:', err.response?.data || err.message);
-      setError(err.response?.data?.msg || err.message || 'Failed to fetch general schedule.');
+    } catch (err: unknown) {
+      console.error('Error fetching general schedule:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch general schedule.');
     }
   };
 
@@ -118,9 +118,9 @@ const UserSchedulePage = () => {
 
       setScheduleItems(itemsForSelectedDay);
 
-    } catch (err: any) {
-      console.error('Error fetching schedule items for user:', err.response?.data || err.message);
-      setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items for user.');
+    } catch (err: unknown) {
+      console.error('Error fetching schedule items for user:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch schedule items for user.');
     } finally {
       setLoading(false);
     }
