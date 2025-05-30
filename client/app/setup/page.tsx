@@ -40,9 +40,9 @@ const SetupPage = () => {
         },
       });
       setScheduleItems(res.data);
-    } catch (err: any) {
-      console.error('Error fetching general schedule:', err.response?.data || err.message);
-      setError(err.response?.data?.msg || err.message || 'Failed to fetch general schedule.');
+    } catch (err: unknown) {
+      console.error('Error fetching general schedule:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch schedule items.');
     } finally {
       setLoading(false);
     }
