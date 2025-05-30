@@ -42,7 +42,7 @@ router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response)
     const targetUserId = req.query.userId || req.user?.id;
 
     if (!targetUserId) {
-         return res.status(401).json({ msg: 'User not authenticated or target user ID not provided' });
+      return res.status(401).json({ msg: 'User not authenticated or target user ID not provided' });
     }
 
     const { start_date, end_date } = req.query;
@@ -107,7 +107,7 @@ router.put('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Respon
 
   } catch (err: any) {
     console.error(err.message);
-     // Handle case where id is not a valid ObjectId
+    // Handle case where id is not a valid ObjectId
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ msg: 'Schedule item not found or not owned by user' });
     }
