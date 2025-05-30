@@ -21,8 +21,8 @@ interface ScheduleItem {
   status?: string;
 }
 
-// Перемещенная функция generateStaticParams, теперь экспортируется
-export async function generateStaticParams() {
+// Перемещенная функция generateStaticParams - УДАЛЕН ЭКСПОРТ
+async function generateStaticParams() {
   try {
     const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/users`);
     const users = res.data;
