@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  min-height: 100vh;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera (redundant with overflow: hidden, but good practice) */
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox (redundant with overflow: hidden, but good practice) */
+body {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Custom styles for glowing background elements */
+.glowing-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(200px);
+  z-index: -1;
+}
+
+/* Define specific orb styles with cooler, softer colors, varied sizes/shapes, positions, and opacity */
+.orb-1 {
+  width: 800px;
+  height: 500px;
+  top: -200px;
+  left: -250px;
+  background: linear-gradient(to right, #5c65b8, #c4b5fd);
+  opacity: 0.4;
+}
+
+.orb-2 {
+  width: 600px;
+  height: 900px;
+  bottom: -150px;
+  right: -200px;
+  background: linear-gradient(to left, #864390, #a78bfa);
+  opacity: 0.2;
+}
+
+.orb-3 {
+  width: 300px;
+  height: 250px;
+  top: 60%;
+  left: 45%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(to top left, #5eead4, #93c5fd);
+  opacity: 0.3;
+}
+
+/* Add more orb classes as needed for variety */
