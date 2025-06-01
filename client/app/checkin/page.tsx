@@ -1,7 +1,7 @@
 // client/app/checkin/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { format, isSameDay, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -31,7 +31,7 @@ const CheckinPage = () => {
 
   const router = useRouter(); // Initialize useRouter
 
-  const fetchGeneralScheduleItems = async () => {
+  const fetchGeneralScheduleItems = useCallback(async () => {
     setError(null);
     try {
       const token = localStorage.getItem('token');
@@ -50,10 +50,12 @@ const CheckinPage = () => {
       } else {
         setError(err.response?.data?.msg || err.message || 'Failed to fetch general schedule.');
       }
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [router, setError, setLoading, setGeneralScheduleItems]);
 
-  const fetchScheduleItemsForDate = async (date: Date) => {
+  const fetchScheduleItemsForDate = useCallback(async (date: Date) => {
     setLoading(true);
     setError(null);
     try {
@@ -92,7 +94,7 @@ const CheckinPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router, setError, setLoading, setScheduleItems]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');

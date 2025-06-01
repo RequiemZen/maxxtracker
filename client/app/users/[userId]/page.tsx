@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { format, isSameDay, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -34,7 +34,7 @@ const UserSchedulePage = () => {
 
   const router = useRouter(); // Initialize useRouter
 
-  const fetchGeneralScheduleItems = async (id: string) => {
+  const fetchGeneralScheduleItems = useCallback(async (id: string) => {
     setError(null);
     try {
       const token = localStorage.getItem('token');
@@ -54,9 +54,9 @@ const UserSchedulePage = () => {
         setError(err.response?.data?.msg || err.message || 'Failed to fetch general schedule.');
       }
     }
-  };
+  }, [router, setError, setGeneralScheduleItems]);
 
-  const fetchUsername = async (id: string) => {
+  const fetchUsername = useCallback(async (id: string) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -81,9 +81,9 @@ const UserSchedulePage = () => {
         setUsername('Неизвестный пользователь');
       }
     }
-  };
+  }, [router, setUsername]);
 
-  const fetchScheduleItemsForDate = async (id: string, date: Date) => {
+  const fetchScheduleItemsForDate = useCallback(async (id: string, date: Date) => {
     setLoading(true);
     setError(null);
     try {
@@ -123,7 +123,7 @@ const UserSchedulePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, selectedDate, router, setError, setLoading, setScheduleItems]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');

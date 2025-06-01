@@ -1,7 +1,7 @@
 // client/app/setup/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { startOfDay, formatISO } from 'date-fns';
@@ -20,7 +20,7 @@ const SetupPage = () => {
 
   const router = useRouter();
 
-  const fetchScheduleItems = async () => {
+  const fetchScheduleItems = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -46,7 +46,7 @@ const SetupPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router, setError, setLoading, setScheduleItems]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
