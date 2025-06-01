@@ -123,7 +123,7 @@ const UserSchedulePage = () => {
     } finally {
       setLoading(false);
     }
-  }, [userId, selectedDate, router, setError, setLoading, setScheduleItems]);
+  }, [router, setError, setLoading, setScheduleItems]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');

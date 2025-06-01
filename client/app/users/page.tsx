@@ -1,7 +1,7 @@
 // client/app/users/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -18,18 +18,7 @@ const UsersPage = () => {
 
     const router = useRouter();
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            router.push('/auth?sessionExpired=true');
-            setLoading(false);
-            return;
-        }
-
-        fetchUsers();
-    }, [router]);
-
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
@@ -53,7 +42,18 @@ const UsersPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [router, setError, setLoading, setUsers]);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            router.push('/auth?sessionExpired=true');
+            setLoading(false);
+            return;
+        }
+
+        fetchUsers();
+    }, [router, fetchUsers]);
 
     if (loading) return (
         <div className="flex flex-col items-center min-h-screen bg-dark-bg text-gray-200 p-8 pt-16 text-center">
