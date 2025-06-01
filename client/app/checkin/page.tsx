@@ -36,7 +36,8 @@ const CheckinPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
         return;
       }
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule`, {
@@ -46,7 +47,8 @@ const CheckinPage = () => {
     } catch (err: any) {
       console.error('Error fetching general schedule:', err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
       } else {
         setError(err.response?.data?.msg || err.message || 'Failed to fetch general schedule.');
       }
@@ -61,7 +63,8 @@ const CheckinPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
         setLoading(false);
         return;
       }
@@ -87,7 +90,8 @@ const CheckinPage = () => {
     } catch (err: any) {
       console.error('Error fetching schedule items for date:', err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
       } else {
         setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items for date.');
       }
@@ -99,7 +103,8 @@ const CheckinPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/auth?sessionExpired=true');
+      localStorage.setItem('sessionExpired', 'true');
+      router.push('/auth');
       setLoading(false);
       return;
     }
@@ -109,7 +114,8 @@ const CheckinPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/auth?sessionExpired=true');
+      localStorage.setItem('sessionExpired', 'true');
+      router.push('/auth');
       setLoading(false);
       return;
     }
@@ -120,7 +126,8 @@ const CheckinPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
         return;
       }
 
@@ -175,7 +182,8 @@ const CheckinPage = () => {
     } catch (err: any) {
       console.error('Error during check-in toggle:', err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
       } else {
         setError(err.response?.data?.msg || err.message || 'Failed to toggle check-in status.');
       }

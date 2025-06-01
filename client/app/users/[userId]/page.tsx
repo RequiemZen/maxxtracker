@@ -39,7 +39,8 @@ const UserSchedulePage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
         return;
       }
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule/${id}`, {
@@ -49,7 +50,8 @@ const UserSchedulePage = () => {
     } catch (err: any) {
       console.error('Error fetching general schedule:', err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
       } else {
         setError(err.response?.data?.msg || err.message || 'Failed to fetch general schedule.');
       }
@@ -60,7 +62,8 @@ const UserSchedulePage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
         return;
       }
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/users`, {
@@ -76,7 +79,8 @@ const UserSchedulePage = () => {
     } catch (err) {
       console.error('Error fetching username:', err);
       if (axios.isAxiosError(err) && err.response && (err.response.status === 401 || err.response.status === 403)) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
       } else {
         setUsername('Неизвестный пользователь');
       }
@@ -89,7 +93,8 @@ const UserSchedulePage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
         setLoading(false);
         return;
       }
@@ -116,7 +121,8 @@ const UserSchedulePage = () => {
     } catch (err: any) {
       console.error('Error fetching schedule items for user:', err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
       } else {
         setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items for user.');
       }
@@ -128,7 +134,8 @@ const UserSchedulePage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token || !userId) {
-      router.push('/auth?sessionExpired=true');
+      localStorage.setItem('sessionExpired', 'true');
+      router.push('/auth');
       setLoading(false);
       return;
     }
@@ -139,7 +146,8 @@ const UserSchedulePage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token || !userId) {
-      router.push('/auth?sessionExpired=true');
+      localStorage.setItem('sessionExpired', 'true');
+      router.push('/auth');
       setLoading(false);
       return;
     }

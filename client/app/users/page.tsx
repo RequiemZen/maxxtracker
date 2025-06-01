@@ -24,7 +24,8 @@ const UsersPage = () => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                router.push('/auth?sessionExpired=true');
+                localStorage.setItem('sessionExpired', 'true');
+                router.push('/auth');
                 setLoading(false);
                 return;
             }
@@ -35,7 +36,8 @@ const UsersPage = () => {
         } catch (err: any) {
             console.error('Error fetching users:', err.response?.data || err.message);
             if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-                router.push('/auth?sessionExpired=true');
+                localStorage.setItem('sessionExpired', 'true');
+                router.push('/auth');
             } else {
                 setError(err.response?.data?.msg || err.message || 'Failed to fetch users.');
             }
@@ -47,7 +49,8 @@ const UsersPage = () => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) {
-            router.push('/auth?sessionExpired=true');
+            localStorage.setItem('sessionExpired', 'true');
+            router.push('/auth');
             setLoading(false);
             return;
         }

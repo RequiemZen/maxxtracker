@@ -26,7 +26,8 @@ const SetupPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
         setLoading(false);
         return;
       }
@@ -39,7 +40,8 @@ const SetupPage = () => {
     } catch (err: any) {
       console.error(err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
       } else {
         setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items.');
       }
@@ -51,7 +53,8 @@ const SetupPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/auth?sessionExpired=true');
+      localStorage.setItem('sessionExpired', 'true');
+      router.push('/auth');
       setLoading(false);
       return;
     }
@@ -83,7 +86,8 @@ const SetupPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
         return;
       }
       const dateForApi = formatISO(startOfDay(new Date()), { representation: 'complete' });
@@ -98,7 +102,8 @@ const SetupPage = () => {
     } catch (err: any) {
       console.error(err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
       } else {
         setInputError(err.response?.data?.msg || err.message || 'Failed to add schedule item.');
       }
@@ -109,7 +114,8 @@ const SetupPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
         return;
       }
       await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule/${id}`, {
@@ -122,7 +128,8 @@ const SetupPage = () => {
     } catch (err: any) {
       console.error(err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        router.push('/auth?sessionExpired=true');
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
       } else {
         setError(err.response?.data?.msg || err.message || 'Failed to delete schedule item.');
       }

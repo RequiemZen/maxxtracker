@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import axios from 'axios';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 // Import icons from react-icons
 import { IoMdEyeOff, IoMdEye } from 'react-icons/io';
 // Import icons if you have a library like react-icons
@@ -16,7 +16,6 @@ const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility for password field
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle password visibility for confirm password field
   const router = useRouter();
-  const searchParams = useSearchParams(); // Инициализация useSearchParams
 
   // Removed modal states
   // const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,17 +39,16 @@ const AuthPage = () => {
     }
   }, [router]); // Depend on router object
 
-  // Эффект для проверки параметра sessionExpired и отображения уведомления
+  // Эффект для проверки флага sessionExpired в localStorage и отображения уведомления
   useEffect(() => {
-    if (searchParams.get('sessionExpired') === 'true') {
+    const sessionExpiredFlag = localStorage.getItem('sessionExpired');
+    if (sessionExpiredFlag === 'true') {
       setTempMessage('Сессия завершена. Войдите снова.');
       setShowNotification(true); // Показываем уведомление
-      // Удаляем параметр из URL после отображения сообщения
-      const newSearchParams = new URLSearchParams(searchParams.toString());
-      newSearchParams.delete('sessionExpired');
-      router.replace(`${window.location.pathname}${newSearchParams.toString() ? '?' + newSearchParams.toString() : ''}`);
+      // Удаляем флаг из localStorage после отображения
+      localStorage.removeItem('sessionExpired');
     }
-  }, [searchParams, router]); // Зависит от searchParams и router
+  }, []); // Empty dependency array as we only check on mount
 
   // Эффект для скрытия уведомления через 3 секунды с анимацией
   useEffect(() => {
