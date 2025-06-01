@@ -34,27 +34,6 @@ const UserSchedulePage = () => {
 
   const router = useRouter(); // Initialize useRouter
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token || !userId) {
-      router.push('/auth?sessionExpired=true');
-      setLoading(false);
-      return;
-    }
-    fetchGeneralScheduleItems(userId);
-    fetchUsername(userId);
-  }, [userId, router]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token || !userId) {
-      router.push('/auth?sessionExpired=true');
-      setLoading(false);
-      return;
-    }
-    fetchScheduleItemsForDate(userId, selectedDate);
-  }, [userId, selectedDate, router]);
-
   const fetchGeneralScheduleItems = async (id: string) => {
     setError(null);
     try {
@@ -145,6 +124,27 @@ const UserSchedulePage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || !userId) {
+      router.push('/auth?sessionExpired=true');
+      setLoading(false);
+      return;
+    }
+    fetchGeneralScheduleItems(userId);
+    fetchUsername(userId);
+  }, [userId, router, fetchGeneralScheduleItems, fetchUsername]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || !userId) {
+      router.push('/auth?sessionExpired=true');
+      setLoading(false);
+      return;
+    }
+    fetchScheduleItemsForDate(userId, selectedDate);
+  }, [userId, selectedDate, router, fetchScheduleItemsForDate]);
 
   const getScheduleItemForSelectedDay = (description: string): ScheduleItem | undefined => {
     return scheduleItems.find(item =>

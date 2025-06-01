@@ -31,26 +31,6 @@ const CheckinPage = () => {
 
   const router = useRouter(); // Initialize useRouter
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/auth?sessionExpired=true');
-      setLoading(false);
-      return;
-    }
-    fetchGeneralScheduleItems();
-  }, [router]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/auth?sessionExpired=true');
-      setLoading(false);
-      return;
-    }
-    fetchScheduleItemsForDate(selectedDate);
-  }, [selectedDate, router]);
-
   const fetchGeneralScheduleItems = async () => {
     setError(null);
     try {
@@ -113,6 +93,26 @@ const CheckinPage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/auth?sessionExpired=true');
+      setLoading(false);
+      return;
+    }
+    fetchGeneralScheduleItems();
+  }, [router, fetchGeneralScheduleItems]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/auth?sessionExpired=true');
+      setLoading(false);
+      return;
+    }
+    fetchScheduleItemsForDate(selectedDate);
+  }, [selectedDate, router, fetchScheduleItemsForDate]);
 
   const handleCheckInToggle = async (generalItem: GeneralScheduleItem, desiredStatus: string | null) => {
     try {

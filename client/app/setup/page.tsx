@@ -20,17 +20,6 @@ const SetupPage = () => {
 
   const router = useRouter();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/auth?sessionExpired=true');
-      setLoading(false);
-      return;
-    }
-
-    fetchScheduleItems();
-  }, [router]);
-
   const fetchScheduleItems = async () => {
     setLoading(true);
     setError(null);
@@ -58,6 +47,17 @@ const SetupPage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/auth?sessionExpired=true');
+      setLoading(false);
+      return;
+    }
+
+    fetchScheduleItems();
+  }, [router, fetchScheduleItems]);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputError(null);
