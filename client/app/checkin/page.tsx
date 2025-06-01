@@ -203,10 +203,10 @@ const CheckinPage = () => {
 
   return (
     <div className="h-screen overflow-y-auto content-wrapper-scrollbar bg-dark-bg text-gray-200">
-      <div className="flex flex-col items-center p-8 pt-16">
+      <div className="flex flex-col items-center p-4 pt-10 sm:p-8 sm:pt-16">
         <button
           onClick={() => router.back()}
-          className="fixed top-8 left-8 text-gray-400 hover:text-white transition duration-300 ease-in-out text-lg"
+          className="fixed top-4 left-4 text-base sm:top-8 sm:left-8 sm:text-lg text-gray-400 hover:text-white transition duration-300 ease-in-out"
         >
           &larr; Назад
         </button>
@@ -228,32 +228,34 @@ const CheckinPage = () => {
         ) : generalScheduleItems.length === 0 ? (
           <div className="text-center text-gray-300 text-base">У вас нет пунктов в общем расписании. <a href="/setup" className="text-blue-400 hover:underline">Добавьте их здесь</a>.</div>
         ) : (
-          <div className="space-y-4 w-full max-w-3xl mx-auto shadow-lg rounded-xl p-8 border-2 border-gray-700" style={{ background: 'radial-gradient(circle at top left, rgba(20, 25, 35, 1) 0%, rgba(5, 10, 20, 1) 100%)' }}>
-            <ul className="space-y-4">
-              {generalScheduleItems.map((generalItem) => {
-                const scheduleItem = getScheduleItemForSelectedDay(generalItem.description);
-                const status = scheduleItem?.status;
+          <div className="space-y-2 w-full max-w-3xl mx-auto shadow-lg rounded-xl p-6 border-2 border-gray-700" style={{ background: 'radial-gradient(circle at top left, rgba(20, 25, 35, 1) 0%, rgba(5, 10, 20, 1) 100%)' }}>
+            <ul className="space-y-3">
+              {generalScheduleItems.map((item) => {
+                const scheduleItem = getScheduleItemForSelectedDay(item.description);
+                const status = scheduleItem?.status; // Can be 'completed', 'skipped', 'cancelled', or undefined/null
 
                 return (
-                  <li key={generalItem._id} className="bg-gray-800 bg-opacity-50 p-4 rounded-lg flex items-center justify-between border border-gray-700">
-                    <span className="text-gray-200 text-lg font-medium mr-4 flex-grow break-all whitespace-normal">{generalItem.description}</span>
-                    <div className="flex items-center space-x-4">
+                  <li key={item._id} className="bg-gray-800 bg-opacity-50 p-3 rounded-lg flex items-center border border-gray-700">
+                    <span className="text-gray-200 text-base font-medium break-all whitespace-normal flex-1 min-w-0">
+                      {item.description}
+                    </span>
+                    <div className="flex items-center space-x-2 ml-3 flex-shrink-0">
                       <div
-                        className={`w-10 h-10 flex items-center justify-center rounded-md border-2 cursor-pointer text-xl transition duration-300 ease-in-out
+                        className={`w-8 h-8 flex items-center justify-center rounded-md border-2 cursor-pointer text-sm transition duration-300 ease-in-out
                           ${status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white'
                             : 'border-gray-500 text-gray-500 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white'}
                     `}
-                        onClick={() => handleCheckInToggle(generalItem, 'completed')}
+                        onClick={() => handleCheckInToggle(item, 'completed')}
                       >
                         ✓
                       </div>
 
                       <div
-                        className={`w-10 h-10 flex items-center justify-center rounded-md border-2 cursor-pointer text-xl transition duration-300 ease-in-out
+                        className={`w-8 h-8 flex items-center justify-center rounded-md border-2 cursor-pointer text-sm transition duration-300 ease-in-out
                           ${status === 'not_completed' ? 'bg-rose-500 border-rose-500 text-white'
                             : 'border-gray-500 text-gray-500 hover:bg-rose-500 hover:border-rose-500 hover:text-white'}
                     `}
-                        onClick={() => handleCheckInToggle(generalItem, 'not_completed')}
+                        onClick={() => handleCheckInToggle(item, 'not_completed')}
                       >
                         ✕
                       </div>

@@ -60,14 +60,14 @@ const HomePage = () => {
         <div className="glowing-orb orb-3"></div>
       </div>
 
-      {/* Main content container - удаляем my-auto */}
-      <div className="py-16 px-8">
+      {/* Main content container */}
+      <div className="py-16 px-8 p-4 pt-10 sm:p-8 sm:pt-16 w-full">
         {/* Header Section - adjusted mb */}
         <div className="text-center mb-8">
           {/* Title with softer text shadow */}
           <h1 className="text-5xl font-extrabold text-white mb-4">MaxxTracker</h1>
           {/* Shortened description, centered with increased max-width */}
-          <p className="text-xl text-gray-300 max-w-md mx-auto">Отслеживайте и визуализируйте ваш ежедневный прогресс и распорядок дня.</p>
+          <p className="text-lg text-gray-300 mx-auto max-w-full sm:max-w-md text-center leading-relaxed">Отслеживайте и визуализируйте ваш ежедневный прогресс и распорядок дня.</p>
         </div>
 
         {/* Navigation Cubes - adjusted mt */}

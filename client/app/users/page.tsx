@@ -82,7 +82,7 @@ const UsersPage = () => {
 
     return (
         <div className="h-screen overflow-y-auto content-wrapper-scrollbar bg-dark-bg text-gray-200">
-            <div className="flex flex-col items-center p-8 pt-16">
+            <div className="flex flex-col items-center p-4 pt-10 sm:p-8 sm:pt-16">
                 <button
                     onClick={() => router.back()}
                     className="absolute top-8 left-8 text-gray-400 hover:text-white transition duration-300 ease-in-out text-lg"
