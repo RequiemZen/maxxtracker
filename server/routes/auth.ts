@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { Schema } from 'mongoose';
+import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import authMiddleware from '../middleware/authMiddleware';
 
@@ -11,19 +12,68 @@ interface AuthenticatedRequest extends Request {
   user?: { id: Schema.Types.ObjectId };
 }
 
-// @route   POST api/auth/login
-// @desc    Authenticate or Register user by username & get token
+// @route   POST api/auth/register
+// @desc    Register a new user
 // @access  Public
-router.post('/login', async (req: Request, res: Response) => {
-  const { username } = req.body;
+router.post('/register', async (req: Request, res: Response) => {
+  const { username, password } = req.body;
 
   try {
+    // Check if user already exists
     let user = await User.findOne({ username });
+    if (user) {
+      return res.status(400).json({ message: 'Пользователь с таким именем уже существует' });
+    }
 
-    // If user doesn't exist, create a new one
+    // Create new user
+    user = new User({
+      username,
+      password
+    });
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+
+    // Save user
+    await user.save();
+
+    // Generate JWT token
+    const payload = { user: { id: user.id } };
+
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET as string,
+      { expiresIn: '365d' },
+      (err: any, token: string | undefined) => {
+        if (err) throw err;
+        res.json({ token });
+      }
+    );
+
+  } catch (err: any) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   POST api/auth/login
+// @desc    Authenticate user & get token
+// @access  Public
+router.post('/login', async (req: Request, res: Response) => {
+  const { username, password } = req.body;
+
+  try {
+    // Check if user exists
+    const user = await User.findOne({ username });
     if (!user) {
-      user = new User({ username });
-      await user.save();
+      return res.status(400).json({ message: 'Неверное имя пользователя или пароль' });
+    }
+
+    // Check password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Неверное имя пользователя или пароль' });
     }
 
     // Generate JWT token
@@ -32,7 +82,7 @@ router.post('/login', async (req: Request, res: Response) => {
     jwt.sign(
       payload,
       process.env.JWT_SECRET as string,
-      { expiresIn: '1h' }, // Token expires in 1 hour
+      { expiresIn: '365d' },
       (err: any, token: string | undefined) => {
         if (err) throw err;
         res.json({ token });

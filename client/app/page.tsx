@@ -53,8 +53,15 @@ const HomePage = () => {
   return (
     // Wrapper div with min-h-screen, overflow-y-auto, and flex centering
     <div className="min-h-screen overflow-y-auto content-wrapper-scrollbar bg-dark-bg text-gray-200 flex flex-col items-center justify-center">
-      {/* Main content container - removed flex centering as it's on the wrapper, kept padding */}
-      <div className="p-8">
+      {/* Контейнер для орбов - добавлен здесь */}
+      <div className="orb-container">
+        <div className="glowing-orb orb-1"></div>
+        <div className="glowing-orb orb-2"></div>
+        <div className="glowing-orb orb-3"></div>
+      </div>
+
+      {/* Main content container - удаляем my-auto */}
+      <div className="py-16 px-8">
         {/* Header Section - adjusted mb */}
         <div className="text-center mb-8">
           {/* Title with softer text shadow */}

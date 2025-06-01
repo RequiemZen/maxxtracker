@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { Schema } from 'mongoose';
 import GeneralScheduleItem from '../models/GeneralScheduleItem';
+import ScheduleItem from '../models/ScheduleItem';
 import authMiddleware from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -57,6 +58,14 @@ router.delete('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Res
     if (!generalScheduleItem) {
       return res.status(404).json({ msg: 'Schedule item not found' });
     }
+
+    // --- Add logic here to delete related ScheduleItems ---
+    // Find all ScheduleItems that match the deleted general item's description for this user
+    await ScheduleItem.deleteMany({
+      user: req.user?.id,
+      description: generalScheduleItem.description, // Use the description from the deleted general item
+    });
+    // ----------------------------------------------------
 
     res.json({ msg: 'Schedule item removed' });
   } catch (err: any) {

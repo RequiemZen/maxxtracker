@@ -193,17 +193,18 @@ const UserSchedulePage = () => {
 
                 return (
                   <li key={generalItem._id} className="bg-gray-800 bg-opacity-50 p-4 rounded-lg flex items-center justify-between border border-gray-700">
-                    <span className="text-gray-200 text-lg font-medium mr-4 flex-grow">{generalItem.description}</span>
+                    <span className="text-gray-200 text-lg font-medium mr-4 flex-grow break-all whitespace-normal">{generalItem.description}</span>
                     <div className="flex items-center space-x-4">
                       <div
                         className={`w-10 h-10 flex items-center justify-center rounded-md border-2 text-xl
                           ${status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white'
                             : status === 'not_completed' ? 'bg-rose-500 border-rose-500 text-white'
-                              : 'border-gray-500 text-gray-500'}
-                        `}
+                              : 'border-gray-500 text-white'}
+                    `}
                       >
                         {status === 'completed' && '✓'}
                         {status === 'not_completed' && '✕'}
+                        {status === undefined || status === null ? '—' : null}
                       </div>
                     </div>
                   </li>

@@ -3,9 +3,18 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+// Import icons from react-icons
+import { IoMdEyeOff, IoMdEye } from 'react-icons/io';
+// Import icons if you have a library like react-icons
+// import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Example import
 
 const AuthPage = () => {
+  const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility for password field
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle password visibility for confirm password field
   const router = useRouter();
   // Removed modal states
   // const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,6 +22,8 @@ const AuthPage = () => {
 
   // Add state for input validation error
   const [inputError, setInputError] = useState('');
+  // Add state specifically for password match error
+  const [passwordMatchError, setPasswordMatchError] = useState('');
 
   // Check if user is already authenticated and redirect
   useEffect(() => {
@@ -24,64 +35,103 @@ const AuthPage = () => {
   }, [router]); // Depend on router object
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Clear error when user starts typing
+    // Clear general input error when user starts typing
     setInputError('');
-    setUsername(e.target.value);
+    // Clear password match error when typing in password or confirm password
+    if (e.target.name === 'password' || e.target.name === 'confirmPassword') {
+      setPasswordMatchError('');
+    }
+
+    const { name, value } = e.target;
+    switch (name) {
+      case 'username':
+        setUsername(value);
+        break;
+      case 'password':
+        setPassword(value);
+        // Real-time check for password match only in registration mode
+        if (!isLogin && confirmPassword && value !== confirmPassword) {
+          setPasswordMatchError('Пароли не совпадают.');
+        } else if (!isLogin) {
+          setPasswordMatchError(''); // Clear error if they now match or confirmPassword is empty
+        }
+        break;
+      case 'confirmPassword':
+        setConfirmPassword(value);
+        // Real-time check for password match only in registration mode
+        if (!isLogin && password && value !== password) {
+          setPasswordMatchError('Пароли не совпадают.');
+        } else if (!isLogin) {
+          setPasswordMatchError(''); // Clear error if they now match or password is empty
+        }
+        break;
+    }
   };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Manual check for empty username
-    if (!username.trim()) { // Use trim() to check for whitespace only input
+    // Validation
+    if (!username.trim()) {
       setInputError('Пожалуйста, введите ваш никнейм.');
       return;
     }
 
-    // Clear any previous input error on successful submission attempt
-    setInputError('');
+    if (!password) {
+      setInputError('Пожалуйста, введите пароль.');
+      return;
+    }
+
+    if (!isLogin && password !== confirmPassword) {
+      // This check should ideally be caught by real-time validation,
+      // but keeping it here as a fallback for form submission.
+      setInputError('Пароли не совпадают.'); // Using general input error for submission failure
+      return;
+    }
+    // Prevent submission if real-time password match error exists in registration mode
+    if (!isLogin && passwordMatchError) {
+      // setInputError(passwordMatchError); // Optionally show under username/generic spot too
+      return; // Prevent submission if passwords don't match
+    }
+
+    setInputError(''); // Clear general input error on successful validation
+    setPasswordMatchError(''); // Clear password match error on successful validation
 
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, { username });
+      const endpoint = isLogin ? 'login' : 'register';
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/${endpoint}`, {
+        username,
+        password
+      });
 
-      // Store token in localStorage
       localStorage.setItem('token', res.data.token);
-
-      // Redirect to the main page (e.g., home)
       router.push('/');
 
     } catch (err: any) {
-      console.error(err.response?.data || err.message);
-      // For API errors, you might still want a different notification,
-      // but for now, we'll just log it or could set inputError with a generic message.
-      // setInputError('Ошибка сервера. Пожалуйста, попробуйте позже.');
-      // Or a more specific error message from the backend:
-      setInputError(err.response?.data?.message || 'Произошла ошибка при входе.');
+      console.error('Error details:', err.response);
+      console.error('Error response data:', err.response?.data);
+      console.error('Error message:', err.message);
+      // console.error(err.response?.data || err.message);
+      const errorMessage = err.response?.data?.message || 'Произошла ошибка при входе.';
+      setInputError(errorMessage);
     }
   };
 
-  // Removed closeModal function
-  // const closeModal = () => {
-  //   setIsModalOpen(false);
-  // };
-
-  // Define a dark gradient for the button, similar to main page cubes
-  // const buttonGradient = 'linear-gradient(110.01deg, rgb(0, 100, 200) 8.7%, rgb(0, 50, 150) 40.24%)'; // Example blue gradient
+  // Function to toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-dark-bg text-gray-200 p-4">
-      {/* Increased max-w, padding, and rounded-xl for a larger, more rounded form container */}
-      <div className="px-12 py-10 mt-8 text-left shadow-lg rounded-xl w-full max-w-lg border-2 border-gray-700" style={{ background: 'radial-gradient(circle at top left, rgba(20, 25, 35, 1) 0%, rgba(5, 10, 20, 1) 100%)' }}>
-        {/* Increased text size and margin for the title */}
-        <h1 className="text-4xl font-bold text-white text-center mb-10">Введите ваш ник</h1>
+      <div className="px-4 sm:px-12 py-10 mt-8 text-left shadow-lg rounded-xl w-full max-w-lg border-2 border-gray-700" style={{ background: 'radial-gradient(circle at top left, rgba(20, 25, 35, 1) 0%, rgba(5, 10, 20, 1) 100%)' }}>
+        <h1 className="text-4xl font-bold text-white text-center mb-10">
+          {isLogin ? 'Вход' : 'Регистрация'}
+        </h1>
         <form onSubmit={onSubmit} className="mt-6">
-          {/* Increased margin-bottom for the input group */}
           <div className="mb-8">
-            {/* Increased margin-bottom for the label */}
             <label className="block text-gray-300 text-base font-medium mb-2" htmlFor="username">Никнейм</label>
-            {/* Increased padding and rounded-xl for the input container, changed focus ring color */}
-            <div className="flex items-center bg-gray-800 border border-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 transition duration-300 ease-in-out">
-              {/* Removed the duplicate 'Ник' span */}
+            <div className="flex items-center bg-gray-800 border border-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 transition duration-300 ease-in-out mb-2">
               <input
                 type="text"
                 placeholder="Ваш никнейм"
@@ -89,23 +139,94 @@ const AuthPage = () => {
                 id="username"
                 value={username}
                 onChange={onChange}
-                // Removed the default `required` attribute
-                // required
                 className="w-full px-4 py-3.5 bg-transparent text-white placeholder-gray-500 focus:outline-none text-base"
               />
             </div>
-            {/* Display input error message here */}
-            {inputError && <p className="text-red-500 text-sm mt-2">{inputError}</p>}
+            {/* Display general input error message here */}
+            {inputError && !passwordMatchError && <p className="text-red-500 text-sm mt-3">{inputError}</p>}
           </div>
-          {/* Increased top margin for the button div */}
-          <div className="flex items-baseline justify-end mt-8">
-            {/* Restyled the button with a green gradient, increased padding, and rounded-xl */}
+
+          <div className="mb-8">
+            <label className="block text-gray-300 text-base font-medium mb-2" htmlFor="password">Пароль</label>
+            <div className="flex items-center bg-gray-800 border border-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 transition duration-300 ease-in-out pr-4">
+              {/* Added pr-4 for spacing for the eye icon */}
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Ваш пароль"
+                name="password"
+                id="password"
+                value={password}
+                onChange={onChange}
+                className="w-full px-4 py-3.5 bg-transparent text-white placeholder-gray-500 focus:outline-none text-base"
+              />
+              {/* Eye Icon Button */}
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="text-gray-400 hover:text-white focus:outline-none"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {/* Replace with actual SVG icons or use text */}
+                {/* Example with react-icons: */}
+                {showPassword ? <IoMdEyeOff /> : <IoMdEye />} {/* Using react-icons */}
+              </button>
+            </div>
+          </div>
+
+          {!isLogin && (
+            <div className="mb-8">
+              <label className="block text-gray-300 text-base font-medium mb-2" htmlFor="confirmPassword">Подтвердите пароль</label>
+              <div className="flex items-center bg-gray-800 border border-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 transition duration-300 ease-in-out pr-4">
+                {/* Added pr-4 for spacing for the eye icon */}
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Повторите пароль"
+                  name="confirmPassword"
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={onChange}
+                  className="w-full px-4 py-3.5 bg-transparent text-white placeholder-gray-500 focus:outline-none text-base"
+                />
+                {/* Eye Icon Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="text-gray-400 hover:text-white focus:outline-none"
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {/* Replace with actual SVG icons or use text */}
+                  {/* {showConfirmPassword ? '👁️' : '🙈'} */}
+                  {/* Example with react-icons: */}
+                  {showConfirmPassword ? <IoMdEyeOff /> : <IoMdEye />} {/* Using react-icons */}
+                </button>
+              </div>
+              {/* Display password match error message here */}
+              {passwordMatchError && <p className="text-red-500 text-sm mt-2">{passwordMatchError}</p>}
+            </div>
+          )}
+
+          <div className="flex flex-col items-center sm:flex-row sm:items-baseline sm:justify-between mt-8">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setInputError(''); // Clear errors on form switch
+                setPasswordMatchError(''); // Clear password match error on form switch
+                setUsername(''); // Clear fields on form switch
+                setPassword('');
+                setConfirmPassword('');
+              }}
+              className="text-emerald-500 hover:text-emerald-400 transition duration-300 ease-in-out text-sm mb-4 sm:mb-0"
+            // Reduced font size for the switch button
+            >
+              {isLogin ? 'Создать аккаунт' : 'Уже есть аккаунт?'}
+            </button>
             <button
               type="submit"
-              className="px-10 py-4 text-white font-semibold rounded-xl hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out w-full"
-              style={{ background: 'linear-gradient(180deg, rgba(16, 185, 129, 1) 0%, rgba(5, 150, 105, 1) 100%)' }} // Green gradient
+              className="px-10 py-4 text-white font-semibold rounded-xl hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out"
+              style={{ background: 'linear-gradient(180deg, rgba(16, 185, 129, 1) 0%, rgba(5, 150, 105, 1) 100%)' }}
             >
-              Войти
+              {isLogin ? 'Войти' : 'Зарегистрироваться'}
             </button>
           </div>
         </form>

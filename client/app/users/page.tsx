@@ -78,22 +78,22 @@ const UsersPage = () => {
                 </button>
                 <h1 className="text-5xl font-extrabold text-white mb-12 text-center">Все пользователи</h1>
 
-                {users.length === 0 ? (
+            {users.length === 0 ? (
                     <div className="text-center text-gray-300 text-base">Нет доступных пользователей.</div>
-                ) : (
+            ) : (
                     <div className="space-y-4 w-full max-w-lg mx-auto shadow-lg rounded-xl p-8 border-2 border-gray-700" style={{ background: 'radial-gradient(circle at top left, rgba(20, 25, 35, 1) 0%, rgba(5, 10, 20, 1) 100%)' }}>
                         <ul className="space-y-4">
-                            {users.map(user => (
+                    {users.map(user => (
                                 <li key={user._id} className="bg-gray-800 bg-opacity-50 p-4 rounded-lg flex items-center justify-between border border-gray-700 hover:bg-gray-700 transition duration-300 ease-in-out cursor-pointer">
                                     <Link href={`/users/${user._id}`} className="text-gray-200 hover:text-white text-lg font-medium transition duration-300 ease-in-out flex-grow">
-                                        {user.username}
-                                    </Link>
+                                {user.username}
+                            </Link>
                                     <span className="text-gray-400 text-xl">&rarr;</span>
-                                </li>
-                            ))}
-                        </ul>
+                        </li>
+                    ))}
+                </ul>
                     </div>
-                )}
+            )}
             </div>
         </div>
     );

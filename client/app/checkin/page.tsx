@@ -240,14 +240,14 @@ const CheckinPage = () => {
 
                 return (
                   <li key={generalItem._id} className="bg-gray-800 bg-opacity-50 p-4 rounded-lg flex items-center justify-between border border-gray-700">
-                    <span className="text-gray-200 text-lg font-medium mr-4 flex-grow">{generalItem.description}</span>
+                    <span className="text-gray-200 text-lg font-medium mr-4 flex-grow break-all whitespace-normal">{generalItem.description}</span>
                     <div className="flex items-center space-x-4"> {/* Adjusted space-x */}
                       {/* Completed Indicator (Checkmark) - Changed to square with rounded corners, updated colors and hover */}
                       <div
                         className={`w-10 h-10 flex items-center justify-center rounded-md border-2 cursor-pointer text-xl transition duration-300 ease-in-out
                           ${status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white'
                             : 'border-gray-500 text-gray-500 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white'}
-                      `}
+                    `}
                         onClick={() => handleCheckInToggle(generalItem, 'completed')}
                       >
                         ✓
@@ -258,7 +258,7 @@ const CheckinPage = () => {
                         className={`w-10 h-10 flex items-center justify-center rounded-md border-2 cursor-pointer text-xl transition duration-300 ease-in-out
                           ${status === 'not_completed' ? 'bg-rose-500 border-rose-500 text-white'
                             : 'border-gray-500 text-gray-500 hover:bg-rose-500 hover:border-rose-500 hover:text-white'}
-                      `}
+                    `}
                         onClick={() => handleCheckInToggle(generalItem, 'not_completed')}
                       >
                         ✕

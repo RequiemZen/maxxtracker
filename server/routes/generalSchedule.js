@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const GeneralScheduleItem_1 = __importDefault(require("../models/GeneralScheduleItem"));
+const ScheduleItem_1 = __importDefault(require("../models/ScheduleItem"));
 const authMiddleware_1 = __importDefault(require("../middleware/authMiddleware"));
 const router = express_1.default.Router();
 // @route   POST api/general-schedule
@@ -53,7 +54,7 @@ router.get('/', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 0
 // @desc    Delete a general schedule item
 // @access  Private
 router.delete('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const generalScheduleItem = yield GeneralScheduleItem_1.default.findOneAndDelete({
             _id: req.params.id,
@@ -62,6 +63,13 @@ router.delete('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, 
         if (!generalScheduleItem) {
             return res.status(404).json({ msg: 'Schedule item not found' });
         }
+        // --- Add logic here to delete related ScheduleItems ---
+        // Find all ScheduleItems that match the deleted general item's description for this user
+        yield ScheduleItem_1.default.deleteMany({
+            user: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id,
+            description: generalScheduleItem.description, // Use the description from the deleted general item
+        });
+        // ----------------------------------------------------
         res.json({ msg: 'Schedule item removed' });
     }
     catch (err) {
