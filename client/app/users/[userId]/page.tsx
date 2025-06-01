@@ -35,41 +35,55 @@ const UserSchedulePage = () => {
   const router = useRouter(); // Initialize useRouter
 
   useEffect(() => {
-    // Fetch general schedule items FOR THE TARGET USER
-    if (userId) {
-      fetchGeneralScheduleItems(userId);
+    const token = localStorage.getItem('token');
+    if (!token || !userId) {
+      router.push('/auth?sessionExpired=true');
+      setLoading(false);
+      return;
     }
-    // Fetch the target user's username
+    fetchGeneralScheduleItems(userId);
     fetchUsername(userId);
-  }, [userId]); // Refetch if userId changes
+  }, [userId, router]);
 
   useEffect(() => {
-    // Fetch schedule items for the selected date and target user
-    if (userId) {
-      fetchScheduleItemsForDate(userId, selectedDate);
+    const token = localStorage.getItem('token');
+    if (!token || !userId) {
+      router.push('/auth?sessionExpired=true');
+      setLoading(false);
+      return;
     }
-  }, [userId, selectedDate]); // Refetch when userId or selected date changes
+    fetchScheduleItemsForDate(userId, selectedDate);
+  }, [userId, selectedDate, router]);
 
   const fetchGeneralScheduleItems = async (id: string) => {
+    setError(null);
     try {
       const token = localStorage.getItem('token');
-      if (!token) return setError('Authentication token not found.');
-
+      if (!token) {
+        router.push('/auth?sessionExpired=true');
+        return;
+      }
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule/${id}`, {
         headers: { 'x-auth-token': token },
       });
       setGeneralScheduleItems(res.data);
     } catch (err: any) {
       console.error('Error fetching general schedule:', err.response?.data || err.message);
-      setError(err.response?.data?.msg || err.message || 'Failed to fetch general schedule.');
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        router.push('/auth?sessionExpired=true');
+      } else {
+        setError(err.response?.data?.msg || err.message || 'Failed to fetch general schedule.');
+      }
     }
   };
 
   const fetchUsername = async (id: string) => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
-      // Reverting to fetching all users and finding by ID, as /api/auth/users/:id seems to return 404
+      if (!token) {
+        router.push('/auth?sessionExpired=true');
+        return;
+      }
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/users`, {
         headers: { 'x-auth-token': token },
       });
@@ -77,13 +91,16 @@ const UserSchedulePage = () => {
       if (foundUser) {
         setUsername(foundUser.username);
       } else {
-        // Handle case where user is not found in the list (shouldn't happen if navigated from users page)
         console.error('User with ID', id, 'not found in the fetched users list.');
         setUsername('Неизвестный пользователь');
       }
     } catch (err) {
       console.error('Error fetching username:', err);
-      setUsername('Неизвестный пользователь');
+      if (axios.isAxiosError(err) && err.response && (err.response.status === 401 || err.response.status === 403)) {
+        router.push('/auth?sessionExpired=true');
+      } else {
+        setUsername('Неизвестный пользователь');
+      }
     }
   };
 
@@ -93,12 +110,11 @@ const UserSchedulePage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('Authentication token not found.');
+        router.push('/auth?sessionExpired=true');
         setLoading(false);
         return;
       }
 
-      // Convert selected date to start of day UTC for consistent querying
       const startOfSelectedDayUTC = startOfDay(date);
       const endOfSelectedDayUTC = new Date(startOfSelectedDayUTC);
       endOfSelectedDayUTC.setDate(endOfSelectedDayUTC.getDate() + 1);
@@ -107,13 +123,11 @@ const UserSchedulePage = () => {
         headers: { 'x-auth-token': token },
         params: {
           userId: id,
-          // Send dates as ISO strings representing start of day UTC
           start_date: startOfSelectedDayUTC.toISOString(),
           end_date: endOfSelectedDayUTC.toISOString(),
         }
       });
 
-      // Filter items to only include those for the exact selected day AND the current user (based on UTC comparison)
       const itemsForSelectedDayAndUser = res.data.filter((item: ScheduleItem) =>
         isSameDay(new Date(item.date), startOfSelectedDayUTC) && item.user === id
       );
@@ -122,13 +136,16 @@ const UserSchedulePage = () => {
 
     } catch (err: any) {
       console.error('Error fetching schedule items for user:', err.response?.data || err.message);
-      setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items for user.');
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        router.push('/auth?sessionExpired=true');
+      } else {
+        setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items for user.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Helper to get the schedule item for a general item on the selected day
   const getScheduleItemForSelectedDay = (description: string): ScheduleItem | undefined => {
     return scheduleItems.find(item =>
       isSameDay(new Date(item.date), selectedDate) && item.description === description && item.user === userId

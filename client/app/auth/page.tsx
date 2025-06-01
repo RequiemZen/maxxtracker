@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 // Import icons from react-icons
 import { IoMdEyeOff, IoMdEye } from 'react-icons/io';
 // Import icons if you have a library like react-icons
@@ -16,6 +16,8 @@ const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility for password field
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle password visibility for confirm password field
   const router = useRouter();
+  const searchParams = useSearchParams(); // Инициализация useSearchParams
+
   // Removed modal states
   // const [isModalOpen, setIsModalOpen] = useState(false);
   // const [modalMessage, setModalMessage] = useState('');
@@ -24,6 +26,10 @@ const AuthPage = () => {
   const [inputError, setInputError] = useState('');
   // Add state specifically for password match error
   const [passwordMatchError, setPasswordMatchError] = useState('');
+  // Добавлено: состояние для отображения временного сообщения
+  const [tempMessage, setTempMessage] = useState<string | null>(null);
+  // Добавлено: состояние для управления видимостью уведомления с анимацией
+  const [showNotification, setShowNotification] = useState(false);
 
   // Check if user is already authenticated and redirect
   useEffect(() => {
@@ -33,6 +39,29 @@ const AuthPage = () => {
       router.replace('/'); // Redirect to home page
     }
   }, [router]); // Depend on router object
+
+  // Эффект для проверки параметра sessionExpired и отображения уведомления
+  useEffect(() => {
+    if (searchParams.get('sessionExpired') === 'true') {
+      setTempMessage('Сессия завершена. Войдите снова.');
+      setShowNotification(true); // Показываем уведомление
+      // Удаляем параметр из URL после отображения сообщения
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete('sessionExpired');
+      router.replace(`${window.location.pathname}${newSearchParams.toString() ? '?' + newSearchParams.toString() : ''}`);
+    }
+  }, [searchParams, router]); // Зависит от searchParams и router
+
+  // Эффект для скрытия уведомления через 3 секунды с анимацией
+  useEffect(() => {
+    if (showNotification) {
+      const timer = setTimeout(() => {
+        setShowNotification(false); // Запускаем анимацию скрытия
+        // setTempMessage(null); // Очищаем сообщение после скрытия (опционально)
+      }, 3000); // Скрываем через 3 секунды
+      return () => clearTimeout(timer); // Очистка таймера при размонтировании или изменении showNotification
+    }
+  }, [showNotification]); // Зависит от showNotification
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Clear general input error when user starts typing
@@ -124,6 +153,12 @@ const AuthPage = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-dark-bg text-gray-200 p-4">
+      {/* Отображение временного сообщения с анимацией */}
+      {tempMessage && (
+        <div className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-red-700 text-white px-6 py-3 rounded-md shadow-lg z-50 text-center transition-all duration-500 ease-in-out ${showNotification ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}>
+          {tempMessage}
+        </div>
+      )}
       <div className="px-4 sm:px-12 py-10 mt-8 text-left shadow-lg rounded-xl w-full max-w-lg border-2 border-gray-700" style={{ background: 'radial-gradient(circle at top left, rgba(20, 25, 35, 1) 0%, rgba(5, 10, 20, 1) 100%)' }}>
         <h1 className="text-4xl font-bold text-white text-center mb-10">
           {isLogin ? 'Вход' : 'Регистрация'}

@@ -21,8 +21,15 @@ const SetupPage = () => {
   const router = useRouter();
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/auth?sessionExpired=true');
+      setLoading(false);
+      return;
+    }
+
     fetchScheduleItems();
-  }, []);
+  }, [router]);
 
   const fetchScheduleItems = async () => {
     setLoading(true);
@@ -30,7 +37,7 @@ const SetupPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('Authentication token not found.');
+        router.push('/auth?sessionExpired=true');
         setLoading(false);
         return;
       }
@@ -42,7 +49,11 @@ const SetupPage = () => {
       setScheduleItems(res.data);
     } catch (err: any) {
       console.error(err.response?.data || err.message);
-      setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items.');
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        router.push('/auth?sessionExpired=true');
+      } else {
+        setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items.');
+      }
     } finally {
       setLoading(false);
     }
@@ -72,7 +83,7 @@ const SetupPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('Authentication token not found.');
+        router.push('/auth?sessionExpired=true');
         return;
       }
       const dateForApi = formatISO(startOfDay(new Date()), { representation: 'complete' });
@@ -86,7 +97,11 @@ const SetupPage = () => {
       setError(null);
     } catch (err: any) {
       console.error(err.response?.data || err.message);
-      setInputError(err.response?.data?.msg || err.message || 'Failed to add schedule item.');
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        router.push('/auth?sessionExpired=true');
+      } else {
+        setInputError(err.response?.data?.msg || err.message || 'Failed to add schedule item.');
+      }
     }
   };
 
@@ -94,7 +109,7 @@ const SetupPage = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('Authentication token not found.');
+        router.push('/auth?sessionExpired=true');
         return;
       }
       await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule/${id}`, {
@@ -106,7 +121,11 @@ const SetupPage = () => {
       setError(null);
     } catch (err: any) {
       console.error(err.response?.data || err.message);
-      setError(err.response?.data?.msg || err.message || 'Failed to delete schedule item.');
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        router.push('/auth?sessionExpired=true');
+      } else {
+        setError(err.response?.data?.msg || err.message || 'Failed to delete schedule item.');
+      }
     }
   };
 
