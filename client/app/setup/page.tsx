@@ -20,6 +20,10 @@ const SetupPage = () => {
 
   const router = useRouter();
 
+  // State for editing
+  const [editingItem, setEditingItem] = useState<GeneralScheduleItem | null>(null);
+  const [editedDescription, setEditedDescription] = useState('');
+
   const fetchScheduleItems = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -125,6 +129,7 @@ const SetupPage = () => {
       });
       setScheduleItems(scheduleItems.filter(item => item._id !== id));
       setError(null);
+      setEditingItem(null); // Close edit mode after deleting
     } catch (err: any) {
       console.error(err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
@@ -132,6 +137,67 @@ const SetupPage = () => {
         router.push('/auth');
       } else {
         setError(err.response?.data?.msg || err.message || 'Failed to delete schedule item.');
+      }
+    }
+  };
+
+  const onEditClick = (item: GeneralScheduleItem) => {
+    setEditingItem(item);
+    setEditedDescription(item.description);
+    setInputError(null); // Clear input error when starting edit
+  };
+
+  const onCancelEdit = () => {
+    setEditingItem(null);
+    setEditedDescription('');
+    setInputError(null); // Clear input error on cancel
+  };
+
+  const onSaveEdit = async () => {
+    if (!editedDescription.trim()) {
+      setInputError('Пожалуйста, введите описание пункта.');
+      return;
+    }
+    if (editedDescription.trim() === editingItem?.description.trim()) {
+      // No change, just exit edit mode
+      setEditingItem(null);
+      setEditedDescription('');
+      setInputError(null);
+      return;
+    }
+
+    const isDuplicate = scheduleItems.some(item =>
+      item._id !== editingItem?._id && item.description.toLowerCase() === editedDescription.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      setInputError('Пункт с таким описанием уже существует. Пожалуйста, выберите другое название.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
+        return;
+      }
+      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule/${editingItem?._id}`, { description: editedDescription }, {
+        headers: {
+          'x-auth-token': token,
+        },
+      });
+      setScheduleItems(scheduleItems.map(item => item._id === res.data._id ? res.data : item));
+      setEditingItem(null);
+      setEditedDescription('');
+      setError(null); // Clear general error on success
+    } catch (err: any) {
+      console.error(err.response?.data || err.message);
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
+      } else {
+        // Use inputError for feedback related to the specific edit attempt
+        setInputError(err.response?.data?.msg || err.message || 'Failed to update schedule item.');
       }
     }
   };
@@ -168,7 +234,7 @@ const SetupPage = () => {
                   className="w-full px-3 sm:px-4 py-3 text-sm sm:text-base bg-transparent text-white placeholder-gray-500 focus:outline-none placeholder:text-xs sm:placeholder:text-sm"
                 />
               </div>
-              {inputError && <p className="text-red-500 text-sm mt-2">{inputError}</p>}
+              {inputError && !editingItem && <p className="text-red-500 text-sm mt-2">{inputError}</p>}
             </div>
 
             <button
@@ -190,17 +256,59 @@ const SetupPage = () => {
             <ul className="space-y-4">
               {scheduleItems.map((item) => (
                 <li key={item._id} className="bg-gray-800 bg-opacity-50 p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between border border-gray-700 gap-3">
-                  <span
-                    className={`text-gray-200 text-base sm:text-lg font-medium sm:mb-0 sm:mr-4 flex-grow break-all min-w-0 whitespace-normal`}
-                  >
-                    {item.description}
-                  </span>
-                  <button
-                    onClick={() => onDelete(item._id)}
-                    className="w-full sm:w-auto bg-rose-600 text-white p-2 rounded-md font-semibold text-sm hover:bg-rose-700 transition duration-300 ease-in-out focus:outline-none"
-                  >
-                    Удалить
-                  </button>
+                  {editingItem?._id === item._id ? (
+                    // Edit mode
+                    <div className="flex flex-col flex-grow w-full">
+                      <div className="flex items-center bg-gray-700 border border-gray-600 rounded-xl focus-within:ring-2 focus-within:ring-amber-500 transition duration-300 ease-in-out w-full mb-2">
+                        <input
+                          type="text"
+                          value={editedDescription}
+                          onChange={(e) => {
+                            setEditedDescription(e.target.value);
+                            setInputError(null); // Clear input error when typing
+                          }}
+                          maxLength={80}
+                          className="w-full px-3 sm:px-4 py-3 text-sm sm:text-base bg-transparent text-white placeholder-gray-500 focus:outline-none placeholder:text-xs sm:placeholder:text-sm"
+                        />
+                      </div>
+                      {inputError && editingItem && <p className="text-red-500 text-sm mt-2">{inputError}</p>}
+                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2 sm:mt-0 w-full sm:w-auto">
+                        <button
+                          onClick={onSaveEdit}
+                          className="w-full sm:w-auto px-4 py-2 text-white font-semibold rounded-md bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 transition duration-300 ease-in-out text-sm text-center"
+                        >
+                          Сохранить
+                        </button>
+                        <button
+                          onClick={onCancelEdit}
+                          className="w-full sm:w-auto px-4 py-2 text-white font-semibold rounded-md bg-gray-600 hover:bg-gray-700 transition duration-300 ease-in-out text-sm text-center"
+                        >
+                          Отмена
+                        </button>
+                        <button
+                          onClick={() => onDelete(item._id)}
+                          className="w-full sm:w-auto px-4 py-2 text-white font-semibold rounded-md bg-rose-600 hover:bg-rose-700 transition duration-300 ease-in-out text-sm text-center"
+                        >
+                          Удалить
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Display mode
+                    <>
+                      <span
+                        className={`text-gray-200 text-base sm:text-lg font-medium flex-grow break-all min-w-0 whitespace-normal`}
+                      >
+                        {item.description}
+                      </span>
+                      <button
+                        onClick={() => onEditClick(item)}
+                        className="w-full sm:w-auto px-4 py-2 text-white font-semibold rounded-md bg-blue-600 hover:bg-blue-700 transition duration-300 ease-in-out text-sm"
+                      >
+                        Редактировать
+                      </button>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

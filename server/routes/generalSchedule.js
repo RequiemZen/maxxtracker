@@ -81,6 +81,38 @@ router.delete('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, 
         res.status(500).send('Server Error');
     }
 }));
+// @route   PUT api/general-schedule/:id
+// @desc    Update a general schedule item
+// @access  Private
+router.put('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const { description } = req.body;
+    try {
+        let generalScheduleItem = yield GeneralScheduleItem_1.default.findOne({
+            _id: req.params.id,
+            user: (_a = req.user) === null || _a === void 0 ? void 0 : _a.id,
+        });
+        if (!generalScheduleItem) {
+            return res.status(404).json({ msg: 'Schedule item not found' });
+        }
+        // Store old description before updating
+        const oldDescription = generalScheduleItem.description;
+        generalScheduleItem.description = description;
+        yield generalScheduleItem.save();
+        // --- Update related ScheduleItems ---
+        // Find all ScheduleItems that match the old description for this user and update them
+        yield ScheduleItem_1.default.updateMany({ user: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id, description: oldDescription }, { $set: { description: description } });
+        // ------------------------------------
+        res.json(generalScheduleItem);
+    }
+    catch (err) {
+        console.error(err.message);
+        if (err.kind === 'ObjectId') {
+            return res.status(404).json({ msg: 'Schedule item not found' });
+        }
+        res.status(500).send('Server Error');
+    }
+}));
 // @route   GET api/general-schedule/:userId
 // @desc    Get all general schedule items for a specific user by ID
 // @access  Private (consider if this should be public or restricted)

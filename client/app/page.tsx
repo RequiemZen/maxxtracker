@@ -62,58 +62,58 @@ const HomePage = () => {
 
       {/* Main content container */}
       <div className="py-16 px-8 p-4 pt-10 sm:p-8 sm:pt-16 w-full">
-        {/* Header Section - adjusted mb */}
-        <div className="text-center mb-8">
-          {/* Title with softer text shadow */}
-          <h1 className="text-5xl font-extrabold text-white mb-4">MaxxTracker</h1>
-          {/* Shortened description, centered with increased max-width */}
+      {/* Header Section - adjusted mb */}
+      <div className="text-center mb-8">
+        {/* Title with softer text shadow */}
+        <h1 className="text-5xl font-extrabold text-white mb-4">MaxxTracker</h1>
+        {/* Shortened description, centered with increased max-width */}
           <p className="text-lg text-gray-300 mx-auto max-w-full sm:max-w-md text-center leading-relaxed">Отслеживайте и визуализируйте ваш ежедневный прогресс и распорядок дня.</p>
-        </div>
+      </div>
 
-        {/* Navigation Cubes - adjusted mt */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto mt-6">
-          {/* Setup Cube */}
-          <Link href="/setup" className="block w-full h-full">
-            <div className={`${baseButtonClasses} border border-gray-700 hover:border-blue-500`} style={{ background: gradient1 }}>
-              {/* Reduced font size for title */}
-              <h2 className="text-xl font-semibold mb-3 text-white">Составить общий распорядок дня</h2>
-              {/* Reduced font size for description */}
-              <p className="text-base text-gray-400">Настройте ваши повторяющиеся задачи и цели.</p>
-            </div>
-          </Link>
+      {/* Navigation Cubes - adjusted mt */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto mt-6">
+        {/* Setup Cube */}
+        <Link href="/setup" className="block w-full h-full">
+          <div className={`${baseButtonClasses} border border-gray-700 hover:border-blue-500`} style={{ background: gradient1 }}>
+            {/* Reduced font size for title */}
+            <h2 className="text-xl font-semibold mb-3 text-white">Составить общий распорядок дня</h2>
+            {/* Reduced font size for description */}
+            <p className="text-base text-gray-400">Настройте ваши повторяющиеся задачи и цели.</p>
+          </div>
+        </Link>
 
-          {/* Check-in Cube */}
-          <Link href="/checkin" className="block w-full h-full">
-            <div className={`${baseButtonClasses} border border-gray-700 hover:border-green-500`} style={{ background: gradient2 }}>
-              {/* Reduced font size for title */}
-              <h2 className="text-xl font-semibold mb-3 text-white">Календарь (Чек-ин)</h2>
-              {/* Reduced font size for description */}
-              <p className="text-base text-gray-400">Отмечайте выполнение задач на каждый день.</p>
-            </div>
-          </Link>
+        {/* Check-in Cube */}
+        <Link href="/checkin" className="block w-full h-full">
+          <div className={`${baseButtonClasses} border border-gray-700 hover:border-green-500`} style={{ background: gradient2 }}>
+            {/* Reduced font size for title */}
+            <h2 className="text-xl font-semibold mb-3 text-white">Календарь (Чек-ин)</h2>
+            {/* Reduced font size for description */}
+            <p className="text-base text-gray-400">Отмечайте выполнение задач на каждый день.</p>
+          </div>
+        </Link>
 
-          {/* Users Cube */}
-          <Link href="/users" className="block w-full h-full">
-            <div className={`${baseButtonClasses} border border-gray-700 hover:border-purple-500`} style={{ background: gradient3 }}>
-              {/* Reduced font size for title */}
-              <h2 className="text-xl font-semibold mb-3 text-white">Другие юзеры</h2>
-              {/* Reduced font size for description */}
-              <p className="text-base text-gray-400">Посмотрите, как справляются другие пользователи.</p>
-            </div>
-          </Link>
-        </div>
+        {/* Users Cube */}
+        <Link href="/users" className="block w-full h-full">
+          <div className={`${baseButtonClasses} border border-gray-700 hover:border-purple-500`} style={{ background: gradient3 }}>
+            {/* Reduced font size for title */}
+            <h2 className="text-xl font-semibold mb-3 text-white">Другие юзеры</h2>
+            {/* Reduced font size for description */}
+            <p className="text-base text-gray-400">Посмотрите, как справляются другие пользователи.</p>
+          </div>
+        </Link>
+      </div>
 
-        {/* Logout Cube - adjusted mt and max-w for spacing/centering */}
-        <div className="flex justify-center mt-20 w-full max-w-md mx-auto">
-          <button onClick={handleLogout} className="block w-full text-left">
-            {/* Adjusted padding/height for consistency and increased font sizes */}
-            <div className="p-6 rounded-lg shadow-lg border border-gray-600 hover:border-gray-400 flex flex-col justify-between transform transition duration-500 ease-in-out" style={{ background: gradientLogout, height: 'auto' }}>
-              {/* Reduced font size for title */}
-              <h2 className="text-xl font-semibold mb-3 text-white">Выйти</h2>
-              {/* Reduced font size for description */}
-              <p className="text-base text-gray-400">Завершить текущую сессию.</p>
-            </div>
-          </button>
+      {/* Logout Cube - adjusted mt and max-w for spacing/centering */}
+      <div className="flex justify-center mt-20 w-full max-w-md mx-auto">
+        <button onClick={handleLogout} className="block w-full text-left">
+          {/* Adjusted padding/height for consistency and increased font sizes */}
+          <div className="p-6 rounded-lg shadow-lg border border-gray-600 hover:border-gray-400 flex flex-col justify-between transform transition duration-500 ease-in-out" style={{ background: gradientLogout, height: 'auto' }}>
+            {/* Reduced font size for title */}
+            <h2 className="text-xl font-semibold mb-3 text-white">Выйти</h2>
+            {/* Reduced font size for description */}
+            <p className="text-base text-gray-400">Завершить текущую сессию.</p>
+          </div>
+        </button>
         </div>
       </div>
     </div>

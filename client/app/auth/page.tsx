@@ -151,7 +151,7 @@ const AuthPage = () => {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div className="flex items-center justify-center min-h-screen bg-dark-bg text-gray-200 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-dark-bg text-gray-200 p-4">
         {/* Отображение временного сообщения с анимацией */}
         {tempMessage && (
           <div className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-red-700 text-white px-6 py-3 rounded-md shadow-lg z-50 text-center transition-all duration-500 ease-in-out ${showNotification ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`}>
@@ -166,16 +166,16 @@ const AuthPage = () => {
             <div className="mb-8">
               <label className="block text-gray-300 text-base font-medium mb-2" htmlFor="username">Никнейм</label>
               <div className="flex items-center bg-gray-800 border border-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 transition duration-300 ease-in-out mb-2">
-                <input
-                  type="text"
-                  placeholder="Ваш никнейм"
-                  name="username"
-                  id="username"
-                  value={username}
-                  onChange={onChange}
+            <input
+              type="text"
+              placeholder="Ваш никнейм"
+              name="username"
+              id="username"
+              value={username}
+              onChange={onChange}
                   className="w-full px-4 py-3.5 bg-transparent text-white placeholder-gray-500 focus:outline-none text-base"
-                />
-              </div>
+            />
+          </div>
               {/* Display general input error message here */}
               {inputError && !passwordMatchError && <p className="text-red-500 text-sm mt-3">{inputError}</p>}
             </div>
@@ -255,15 +255,15 @@ const AuthPage = () => {
               >
                 {isLogin ? 'Создать аккаунт' : 'Уже есть аккаунт?'}
               </button>
-              <button
-                type="submit"
+            <button
+              type="submit"
                 className="px-10 py-4 text-white font-semibold rounded-xl hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition duration-300 ease-in-out"
                 style={{ background: 'linear-gradient(180deg, rgba(16, 185, 129, 1) 0%, rgba(5, 150, 105, 1) 100%)' }}
-              >
+            >
                 {isLogin ? 'Войти' : 'Зарегистрироваться'}
-              </button>
-            </div>
-          </form>
+            </button>
+          </div>
+        </form>
 
           {/* Removed Modal Structure */}
           {/* {isModalOpen && (
