@@ -197,7 +197,7 @@ const CheckinPage = () => {
         return;
       }
 
-      const res = await axios.put(
+      await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/api/schedule/${itemId}`,
         { reason: tempReason },
         { headers: { 'x-auth-token': token } }
