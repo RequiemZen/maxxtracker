@@ -5,6 +5,7 @@ interface IScheduleItem extends Document {
   description: string;
   date: Date;
   status?: string;
+  reason?: string;
   createdAt: Date;
 }
 
@@ -26,6 +27,11 @@ const ScheduleItemSchema = new mongoose.Schema({
     type: String,
     required: false,
     enum: ['completed', 'not_completed'],
+  },
+  reason: {
+    type: String,
+    required: false,
+    maxlength: 40,
   },
   createdAt: {
     type: Date,

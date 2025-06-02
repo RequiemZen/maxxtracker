@@ -20,6 +20,7 @@ interface ScheduleItem {
   description: string;
   date: string; // Date will be string from backend
   status?: string; // Changed from isCompleted: boolean
+  reason?: string;
 }
 
 const CheckinPage = () => {
@@ -28,6 +29,8 @@ const CheckinPage = () => {
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]); // Completed items for selected date
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingReason, setEditingReason] = useState<string | null>(null);
+  const [tempReason, setTempReason] = useState<string>('');
 
   const router = useRouter(); // Initialize useRouter
 
@@ -144,22 +147,21 @@ const CheckinPage = () => {
         }
 
         if (newStatus === null) {
-          await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule/${existingScheduleItem._id}`, { status: null }, {
-            headers: { 'x-auth-token': token },
-          });
+          await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule/${existingScheduleItem._id}`,
+            { status: null, reason: null },
+            { headers: { 'x-auth-token': token } }
+          );
           setScheduleItems(scheduleItems.filter(item => item._id !== existingScheduleItem._id));
           console.log('Schedule item removed (status reset)');
-
         } else {
-          const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule/${existingScheduleItem._id}`, { status: newStatus }, {
-            headers: { 'x-auth-token': token },
-          });
+          const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule/${existingScheduleItem._id}`,
+            { status: newStatus, reason: newStatus === 'completed' ? null : existingScheduleItem.reason },
+            { headers: { 'x-auth-token': token } }
+          );
           updatedItem = res.data;
-
           setScheduleItems(scheduleItems.map(item => item._id === updatedItem?._id ? updatedItem : item));
           console.log('Schedule item updated:', updatedItem);
         }
-
       } else if (desiredStatus !== null) {
         newStatus = desiredStatus;
         const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule`, {
@@ -172,13 +174,9 @@ const CheckinPage = () => {
 
         setScheduleItems([...scheduleItems, res.data]);
         console.log('Schedule item created:', res.data);
-      } else {
-        console.log('Item not marked and desired status is null, no action needed.');
-        setError(null);
       }
 
       setError(null);
-
     } catch (err: any) {
       console.error('Error during check-in toggle:', err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
@@ -188,6 +186,37 @@ const CheckinPage = () => {
         setError(err.response?.data?.msg || err.message || 'Failed to toggle check-in status.');
       }
     }
+  };
+
+  const handleSaveReason = async (itemId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
+        return;
+      }
+
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/schedule/${itemId}`,
+        { reason: tempReason },
+        { headers: { 'x-auth-token': token } }
+      );
+
+      setScheduleItems(scheduleItems.map(item =>
+        item._id === itemId ? { ...item, reason: tempReason } : item
+      ));
+      setEditingReason(null);
+      setTempReason('');
+    } catch (err: any) {
+      console.error('Error saving reason:', err.response?.data || err.message);
+      setError(err.response?.data?.msg || err.message || 'Failed to save reason.');
+    }
+  };
+
+  const handleEditReason = (itemId: string, currentReason: string) => {
+    setEditingReason(itemId);
+    setTempReason(currentReason || '');
   };
 
   const getScheduleItemForSelectedDay = (description: string): ScheduleItem | undefined => {
@@ -216,7 +245,7 @@ const CheckinPage = () => {
       <div className="flex flex-col items-center p-4 pt-10 sm:p-8 sm:pt-16">
         <button
           onClick={() => router.back()}
-          className="fixed top-4 left-4 text-base sm:top-8 sm:left-8 sm:text-lg text-gray-400 hover:text-white transition duration-300 ease-in-out"
+          className="fixed top-4 left-4 text-base sm:top-8 sm:left-8 sm:text-lg text-gray-400 hover:text-white transition duration-300 ease-in-out z-10"
         >
           &larr; Назад
         </button>
@@ -242,37 +271,85 @@ const CheckinPage = () => {
             <ul className="space-y-3">
               {generalScheduleItems.map((item) => {
                 const scheduleItem = getScheduleItemForSelectedDay(item.description);
-                const status = scheduleItem?.status; // Can be 'completed', 'skipped', 'cancelled', or undefined/null
+                const status = scheduleItem?.status;
 
                 return (
-                  <li key={item._id} className="bg-gray-800 bg-opacity-50 p-3 rounded-lg flex items-center border border-gray-700">
-                    <span className="text-gray-200 text-base font-medium break-all whitespace-normal flex-1 min-w-0">
-                      {item.description}
-                    </span>
-                    <div className="flex items-center space-x-2 ml-3 flex-shrink-0">
-                      <div
-                        className={`w-8 h-8 flex items-center justify-center rounded-md border-2 cursor-pointer text-sm transition duration-300 ease-in-out
-                          ${status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white'
-                            : 'border-gray-500 text-gray-500 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white'}
-                    `}
-                        onClick={() => handleCheckInToggle(item, 'completed')}
-                      >
-                        ✓
+                  <li key={item._id} className="bg-gray-800 bg-opacity-50 p-3 rounded-lg flex flex-col border border-gray-700">
+                    <div className="flex items-center">
+                      <span className="text-gray-200 text-base font-medium overflow-wrap break-word flex-1 min-w-0">
+                        {item.description}
+                      </span>
+                      <div className="flex space-x-2 ml-4">
+                        <button
+                          onClick={() => handleCheckInToggle(item, 'completed')}
+                          className={`px-3 py-1 rounded ${status === 'completed'
+                            ? 'bg-green-600 hover:bg-green-700'
+                            : 'bg-gray-600 hover:bg-gray-700'
+                            } text-white transition-colors duration-200`}
+                        >
+                          ✓
+                        </button>
+                        <button
+                          onClick={() => handleCheckInToggle(item, 'not_completed')}
+                          className={`px-3 py-1 rounded ${status === 'not_completed'
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : 'bg-gray-600 hover:bg-gray-700'
+                            } text-white transition-colors duration-200`}
+                        >
+                          ✕
+                        </button>
                       </div>
-
-                      <div
-                        className={`w-8 h-8 flex items-center justify-center rounded-md border-2 cursor-pointer text-sm transition duration-300 ease-in-out
-                          ${status === 'not_completed' ? 'bg-rose-500 border-rose-500 text-white'
-                            : 'border-gray-500 text-gray-500 hover:bg-rose-500 hover:border-rose-500 hover:text-white'}
-                    `}
-                        onClick={() => handleCheckInToggle(item, 'not_completed')}
-                      >
-                        ✕
-                      </div>
-
                     </div>
+
+                    {status === 'not_completed' && scheduleItem && (
+                      <div className="mt-2">
+                        {editingReason === scheduleItem._id ? (
+                          <div className="flex flex-col space-y-2">
+                            <input
+                              type="text"
+                              value={tempReason}
+                              onChange={(e) => setTempReason(e.target.value)}
+                              maxLength={40}
+                              placeholder="Введите причину (макс. 40 символов)"
+                              className="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white placeholder-gray-400"
+                            />
+                            <div className="flex justify-end space-x-2">
+                              <button
+                                onClick={() => {
+                                  setEditingReason(null);
+                                  setTempReason('');
+                                }}
+                                className="px-3 py-1 rounded bg-gray-600 hover:bg-gray-700 text-white transition-colors duration-200"
+                              >
+                                Отмена
+                              </button>
+                              <button
+                                onClick={() => handleSaveReason(scheduleItem._id)}
+                                className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
+                              >
+                                Сохранить
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col space-y-2">
+                            {scheduleItem?.reason && (
+                              <p className="text-gray-300 text-sm italic">
+                                Причина: {scheduleItem.reason}
+                              </p>
+                            )}
+                            <button
+                              onClick={() => handleEditReason(scheduleItem._id, scheduleItem?.reason || '')}
+                              className="text-sm text-blue-400 hover:text-blue-300 transition-colors duration-200 self-start"
+                            >
+                              {scheduleItem?.reason ? 'Редактировать причину' : 'Добавить причину'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </li>
-                )
+                );
               })}
             </ul>
           </div>

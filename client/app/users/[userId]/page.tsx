@@ -19,6 +19,7 @@ interface ScheduleItem {
   description: string;
   date: string;
   status?: string;
+  reason?: string;
 }
 
 const UserSchedulePage = () => {
@@ -187,7 +188,7 @@ const UserSchedulePage = () => {
       <div className="flex flex-col items-center p-4 pt-10 sm:p-8 sm:pt-16">
         <button
           onClick={() => router.back()}
-          className="fixed top-4 left-4 text-base sm:top-8 sm:left-8 sm:text-lg text-gray-400 hover:text-white transition duration-300 ease-in-out"
+          className="fixed top-4 left-4 text-base sm:top-8 sm:left-8 sm:text-lg text-gray-400 hover:text-white transition duration-300 ease-in-out z-10"
         >
           &larr; Назад
         </button>
@@ -217,23 +218,33 @@ const UserSchedulePage = () => {
                 const status = scheduleItem?.status;
 
                 return (
-                  <li key={generalItem._id} className="bg-gray-800 bg-opacity-50 p-3 rounded-lg flex items-center justify-between border border-gray-700">
-                    <span className="text-gray-200 text-base font-medium mr-3 flex-grow break-all whitespace-normal">
-                      {generalItem.description}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className={`w-8 h-8 flex items-center justify-center rounded-md border-2 text-sm
-                          ${status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white'
-                            : status === 'not_completed' ? 'bg-rose-500 border-rose-500 text-white'
-                              : 'border-gray-500 text-white'}
-                    `}
-                      >
-                        {status === 'completed' && '✓'}
-                        {status === 'not_completed' && '✕'}
-                        {status === undefined || status === null ? '—' : null}
+                  <li key={generalItem._id} className="bg-gray-800 bg-opacity-50 p-3 rounded-lg flex flex-col border border-gray-700">
+                    <div className="flex items-center">
+                      <span className="text-gray-200 text-base font-medium overflow-wrap break-word flex-1 min-w-0">
+                        {generalItem.description}
+                      </span>
+                      <div className="flex items-center space-x-2 ml-4">
+                        <div
+                          className={`w-8 h-8 flex items-center justify-center rounded-md text-sm
+                          ${status === 'completed' ? 'bg-green-600 text-white'
+                              : status === 'not_completed' ? 'bg-red-600 text-white'
+                                : 'bg-gray-600 text-white'}
+                          `}
+                        >
+                          {status === 'completed' && '✓'}
+                          {status === 'not_completed' && '✕'}
+                          {status === undefined || status === null ? '—' : null}
+                        </div>
                       </div>
                     </div>
+
+                    {status === 'not_completed' && scheduleItem?.reason && (
+                      <div className="mt-2">
+                        <p className="text-gray-300 text-sm italic">
+                          Причина: {scheduleItem.reason}
+                        </p>
+                      </div>
+                    )}
                   </li>
                 );
               })}

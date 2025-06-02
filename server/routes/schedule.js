@@ -72,7 +72,7 @@ router.get('/', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 0
 // @access  Private
 router.put('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    const { status } = req.body; // Expecting 'status' field
+    const { status, reason } = req.body; // Expecting 'status' and optional 'reason' fields
     try {
         // If status is null or empty, delete the item (equivalent to not marked)
         if (status === null || status === '') {
@@ -88,7 +88,11 @@ router.put('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, voi
         }
         else {
             // If status is provided, update the item
-            let scheduleItem = yield ScheduleItem_1.default.findOneAndUpdate({ _id: req.params.id, user: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id }, { $set: { status } }, { new: true } // Return the updated document
+            const updateData = { status };
+            if (reason !== undefined) {
+                updateData.reason = reason;
+            }
+            let scheduleItem = yield ScheduleItem_1.default.findOneAndUpdate({ _id: req.params.id, user: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id }, { $set: updateData }, { new: true } // Return the updated document
             );
             if (!scheduleItem) {
                 return res.status(404).json({ msg: 'Schedule item not found or not owned by user' });

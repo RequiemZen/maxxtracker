@@ -53,6 +53,11 @@ const ScheduleItemSchema = new mongoose_1.default.Schema({
         required: false,
         enum: ['completed', 'not_completed'],
     },
+    reason: {
+        type: String,
+        required: false,
+        maxlength: 40,
+    },
     createdAt: {
         type: Date,
         default: Date.now,

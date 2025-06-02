@@ -72,7 +72,7 @@ router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response)
 // @desc    Update or delete a schedule item based on status
 // @access  Private
 router.put('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  const { status } = req.body; // Expecting 'status' field
+  const { status, reason } = req.body; // Expecting 'status' and optional 'reason' fields
 
   try {
     // If status is null or empty, delete the item (equivalent to not marked)
@@ -91,9 +91,14 @@ router.put('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Respon
 
     } else {
       // If status is provided, update the item
+      const updateData: any = { status };
+      if (reason !== undefined) {
+        updateData.reason = reason;
+      }
+
       let scheduleItem = await ScheduleItem.findOneAndUpdate(
         { _id: req.params.id, user: req.user?.id },
-        { $set: { status } },
+        { $set: updateData },
         { new: true } // Return the updated document
       );
 

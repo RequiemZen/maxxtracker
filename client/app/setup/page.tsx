@@ -296,11 +296,22 @@ const SetupPage = () => {
                   ) : (
                     // Display mode
                     <>
-                      <span
-                        className={`text-gray-200 text-base sm:text-lg font-medium flex-grow break-all min-w-0 whitespace-normal`}
-                      >
-                        {item.description}
-                      </span>
+                      {editingItem && editingItem._id === item._id ? (
+                        <div className="flex flex-col flex-grow">
+                          <input
+                            type="text"
+                            value={editedDescription}
+                            onChange={(e) => setEditedDescription(e.target.value)}
+                            maxLength={80}
+                            className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          {inputError && editingItem && editingItem._id === item._id && <p className="text-red-500 text-sm mt-2">{inputError}</p>}
+                        </div>
+                      ) : (
+                        <span className="text-gray-200 text-sm sm:text-base font-medium overflow-wrap break-word flex-grow mr-4">
+                          {item.description}
+                        </span>
+                      )}
                       <button
                         onClick={() => onEditClick(item)}
                         className="w-full sm:w-auto px-4 py-2 text-white font-semibold rounded-md bg-blue-600 hover:bg-blue-700 transition duration-300 ease-in-out text-sm"
@@ -319,4 +330,4 @@ const SetupPage = () => {
   );
 };
 
-export default SetupPage;
+export default SetupPage; 
