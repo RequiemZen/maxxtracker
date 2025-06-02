@@ -100,7 +100,8 @@ const UserSchedulePage = () => {
         return;
       }
 
-      const startOfSelectedDayUTC = startOfDay(date);
+      // Calculate start and end of the selected day in UTC
+      const startOfSelectedDayUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
       const endOfSelectedDayUTC = new Date(startOfSelectedDayUTC);
       endOfSelectedDayUTC.setDate(endOfSelectedDayUTC.getDate() + 1);
 
@@ -113,11 +114,9 @@ const UserSchedulePage = () => {
         }
       });
 
-      const itemsForSelectedDayAndUser = res.data.filter((item: ScheduleItem) =>
-        isSameDay(new Date(item.date), startOfSelectedDayUTC) && item.user === id
-      );
-
-      setScheduleItems(itemsForSelectedDayAndUser);
+      // The backend should now filter correctly based on UTC date ranges.
+      // We can simply set the items as received.
+      setScheduleItems(res.data);
 
     } catch (err: any) {
       console.error('Error fetching schedule items for user:', err.response?.data || err.message);
@@ -156,9 +155,17 @@ const UserSchedulePage = () => {
   }, [userId, selectedDate, router, fetchScheduleItemsForDate]);
 
   const getScheduleItemForSelectedDay = (description: string): ScheduleItem | undefined => {
-    return scheduleItems.find(item =>
-      isSameDay(new Date(item.date), selectedDate) && item.description === description && item.user === userId
-    );
+    const selectedDateUTC = new Date(Date.UTC(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()));
+    return scheduleItems.find(item => {
+      const itemDate = new Date(item.date);
+      return (
+        itemDate.getUTCFullYear() === selectedDateUTC.getUTCFullYear() &&
+        itemDate.getUTCMonth() === selectedDateUTC.getUTCMonth() &&
+        itemDate.getUTCDate() === selectedDateUTC.getUTCDate() &&
+        item.description === description &&
+        item.user === userId
+      );
+    });
   };
 
   if (loading && generalScheduleItems.length === 0) return (

@@ -72,23 +72,23 @@ const CheckinPage = () => {
         return;
       }
 
-      const startOfSelectedDay = startOfDay(date);
-      const endOfSelectedDay = new Date(startOfSelectedDay);
-      endOfSelectedDay.setDate(endOfSelectedDay.getDate() + 1);
+      // Calculate start and end of the selected day in UTC
+      const startOfSelectedDayUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const endOfSelectedDayUTC = new Date(startOfSelectedDayUTC);
+      endOfSelectedDayUTC.setDate(endOfSelectedDayUTC.getDate() + 1);
+
 
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule`, {
         headers: { 'x-auth-token': token },
         params: {
-          start_date: startOfSelectedDay.toISOString(),
-          end_date: endOfSelectedDay.toISOString(),
+          start_date: startOfSelectedDayUTC.toISOString(),
+          end_date: endOfSelectedDayUTC.toISOString(),
         }
       });
 
-      const itemsForSelectedDay = res.data.filter((item: ScheduleItem) =>
-        isSameDay(new Date(item.date), date)
-      );
-
-      setScheduleItems(itemsForSelectedDay);
+      // The backend should now filter correctly based on UTC date ranges.
+      // We can simply set the items as received.
+      setScheduleItems(res.data);
 
     } catch (err: any) {
       console.error('Error fetching schedule items for date:', err.response?.data || err.message);
@@ -165,7 +165,7 @@ const CheckinPage = () => {
       } else if (desiredStatus !== null) {
         newStatus = desiredStatus;
         const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule`, {
-          date: selectedDate.toISOString(),
+          date: new Date(Date.UTC(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())).toISOString(),
           description: generalItem.description,
           status: newStatus,
         }, {
@@ -220,9 +220,11 @@ const CheckinPage = () => {
   };
 
   const getScheduleItemForSelectedDay = (description: string): ScheduleItem | undefined => {
-    return scheduleItems.find(item =>
-      isSameDay(new Date(item.date), selectedDate) && item.description === description
-    );
+    const selectedDateUTC = new Date(Date.UTC(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()));
+    return scheduleItems.find(item => {
+      const itemDate = new Date(item.date);
+      return itemDate.getTime() === selectedDateUTC.getTime() && item.description === description;
+    });
   };
 
   if (loading && generalScheduleItems.length === 0) return <div className="container mx-auto px-4 py-8 text-center text-gray-200 bg-dark-bg">Загрузка...</div>;
