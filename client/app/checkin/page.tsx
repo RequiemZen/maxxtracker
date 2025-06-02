@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { format, isSameDay, startOfDay } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import DatePicker from 'react-datepicker'; // Import DatePicker
 import 'react-datepicker/dist/react-datepicker.css'; // Import DatePicker styles
