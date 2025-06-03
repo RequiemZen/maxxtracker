@@ -31,7 +31,6 @@ const ScheduleItemSchema = new mongoose.Schema({
   reason: {
     type: String,
     required: false,
-    maxlength: 40,
   },
   createdAt: {
     type: Date,

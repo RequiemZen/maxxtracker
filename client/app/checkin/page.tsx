@@ -311,8 +311,8 @@ const CheckinPage = () => {
                               type="text"
                               value={tempReason}
                               onChange={(e) => setTempReason(e.target.value)}
-                              maxLength={40}
-                              placeholder="Введите причину (макс. 40 символов)"
+                              maxLength={100}
+                              placeholder="Введите причину (макс. 100 символов)"
                               className="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white placeholder-gray-400"
                             />
                             <div className="flex justify-end space-x-2">
