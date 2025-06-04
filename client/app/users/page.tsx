@@ -64,7 +64,7 @@ const UsersPage = () => {
                 onClick={() => router.back()}
                 className="absolute top-8 left-8 text-gray-400 hover:text-white transition duration-300 ease-in-out text-lg"
             >
-                &larr; Назад
+                Назад
             </button>
             Загрузка пользователей...
         </div>
@@ -75,7 +75,7 @@ const UsersPage = () => {
                 onClick={() => router.back()}
                 className="absolute top-8 left-8 text-gray-400 hover:text-white transition duration-300 ease-in-out text-lg"
             >
-                &larr; Назад
+                Назад
             </button>
             <div className="bg-red-900 bg-opacity-30 border border-red-700 text-red-300 px-6 py-4 rounded-md relative mb-8 w-full max-w-3xl text-center">
                 <span className="block sm:inline">Ошибка: {error}</span>
@@ -90,7 +90,7 @@ const UsersPage = () => {
                     onClick={() => router.back()}
                     className="fixed top-4 left-4 text-base sm:top-8 sm:left-8 sm:text-lg text-gray-400 hover:text-white transition duration-300 ease-in-out"
                 >
-                    &larr; Назад
+                    Назад
                 </button>
                 <h1 className="text-5xl font-extrabold text-white mb-12 text-center">Все пользователи</h1>
 

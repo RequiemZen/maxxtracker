@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 interface IScheduleItem extends Document {
   user: Schema.Types.ObjectId;
+  definitionId: Schema.Types.ObjectId;
   description: string;
   date: Date;
   status?: string;
@@ -15,6 +16,10 @@ const ScheduleItemSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  definitionId: {
+    type: Schema.Types.ObjectId,
+    required: true,
+  },
   description: {
     type: String,
     required: true,
@@ -25,8 +30,8 @@ const ScheduleItemSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    required: false,
     enum: ['completed', 'not_completed'],
+    required: false,
   },
   reason: {
     type: String,

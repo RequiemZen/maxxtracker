@@ -37,6 +37,7 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
 // @access  Private
 router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    // Fetch general schedule items for the user and sort by creation date
     const generalScheduleItems = await GeneralScheduleItem.find({ user: req.user?.id }).sort({ createdAt: 1 });
     res.json(generalScheduleItems);
   } catch (err: any) {
@@ -60,10 +61,10 @@ router.delete('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Res
     }
 
     // --- Add logic here to delete related ScheduleItems ---
-    // Find all ScheduleItems that match the deleted general item's description for this user
+    // Теперь удаляем записи ScheduleItem, связанные по definitionId с удаленным общим пунктом
     await ScheduleItem.deleteMany({
       user: req.user?.id,
-      description: generalScheduleItem.description, // Use the description from the deleted general item
+      definitionId: generalScheduleItem._id, // Используем _id удаленного общего пункта
     });
     // ----------------------------------------------------
 

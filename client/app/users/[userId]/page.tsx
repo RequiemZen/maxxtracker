@@ -20,6 +20,29 @@ interface ScheduleItem {
   date: string;
   status?: string;
   reason?: string;
+  definitionId?: string;
+}
+
+interface TemporaryScheduleDefinition {
+  _id: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  createdAt: string; // Assuming createdAt is also fetched
+}
+
+interface CombinedScheduleItem {
+  _id: string; // Original _id from General or Temporary definition
+  definitionId: string; // _id used for linking with ScheduleItem
+  description: string;
+  isTemporary: boolean;
+  startDate?: string; // Only for temporary items
+  endDate?: string; // Only for temporary items
+  createdAt?: string; // Only for temporary items
+  // Properties added after combining with actual entries
+  status?: string; // From ScheduleItem
+  reason?: string; // From ScheduleItem
+  actualEntryId?: string; // ID of the associated ScheduleItem
 }
 
 const UserSchedulePage = () => {
@@ -29,6 +52,7 @@ const UserSchedulePage = () => {
   const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
   const [generalScheduleItems, setGeneralScheduleItems] = useState<GeneralScheduleItem[]>([]);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
+  const [temporaryScheduleDefinitions, setTemporaryScheduleDefinitions] = useState<TemporaryScheduleDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState('...'); // State to hold the target user's username
@@ -58,6 +82,31 @@ const UserSchedulePage = () => {
       }
     }
   }, [router, setError, setGeneralScheduleItems]);
+
+  const fetchTemporaryDefinitions = useCallback(async (id: string) => {
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
+        return;
+      }
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule/temporary`, {
+        headers: { 'x-auth-token': token },
+        params: { userId: id }, // Pass the target user ID
+      });
+      setTemporaryScheduleDefinitions(res.data);
+    } catch (err: any) {
+      console.error('Error fetching temporary schedule definitions:', err.response?.data || err.message);
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        localStorage.setItem('sessionExpired', 'true');
+        router.push('/auth');
+      } else {
+        setError(err.response?.data?.msg || err.message || 'Failed to fetch temporary schedule definitions.');
+      }
+    }
+  }, [router, setError, setTemporaryScheduleDefinitions]);
 
   const fetchUsername = useCallback(async (id: string) => {
     try {
@@ -116,7 +165,7 @@ const UserSchedulePage = () => {
 
       // The backend should now filter correctly based on UTC date ranges.
       // We can simply set the items as received.
-      setScheduleItems(res.data);
+      setScheduleItems(res.data.actualEntries || []); // Use actualEntries and provide empty array fallback
 
     } catch (err: any) {
       console.error('Error fetching schedule items for user:', err.response?.data || err.message);
@@ -140,8 +189,9 @@ const UserSchedulePage = () => {
       return;
     }
     fetchGeneralScheduleItems(userId);
+    fetchTemporaryDefinitions(userId);
     fetchUsername(userId);
-  }, [userId, router, fetchGeneralScheduleItems, fetchUsername]);
+  }, [userId, router, fetchGeneralScheduleItems, fetchTemporaryDefinitions, fetchUsername]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -154,24 +204,76 @@ const UserSchedulePage = () => {
     fetchScheduleItemsForDate(userId, selectedDate);
   }, [userId, selectedDate, router, fetchScheduleItemsForDate]);
 
-  const getScheduleItemForSelectedDay = (description: string): ScheduleItem | undefined => {
+  // Combine general, active temporary items, and actual entries for display
+  const itemsToDisplay = useCallback((): CombinedScheduleItem[] => {
     const selectedDateUTC = new Date(Date.UTC(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()));
-    return scheduleItems.find(item => {
-      const itemDate = new Date(item.date);
-      return (
-        itemDate.getUTCFullYear() === selectedDateUTC.getUTCFullYear() &&
-        itemDate.getUTCMonth() === selectedDateUTC.getUTCMonth() &&
-        itemDate.getUTCDate() === selectedDateUTC.getUTCDate() &&
-        item.description === description &&
-        item.user === userId
-      );
+
+    // Filter temporary definitions active on the selected date
+    const activeTemporaryItems = temporaryScheduleDefinitions.filter(def => {
+      const startDateUTC = new Date(def.startDate);
+      const endDateUTC = new Date(def.endDate);
+      // Check if the selected date is within the temporary item's date range (inclusive)
+      return selectedDateUTC >= new Date(Date.UTC(startDateUTC.getUTCFullYear(), startDateUTC.getUTCMonth(), startDateUTC.getUTCDate())) &&
+        selectedDateUTC <= new Date(Date.UTC(endDateUTC.getUTCFullYear(), endDateUTC.getUTCMonth(), endDateUTC.getUTCDate()));
     });
-  };
+
+    // Map actual entries for quick lookup by definitionId and date
+    const actualEntriesMap = new Map<string, ScheduleItem>();
+    scheduleItems.forEach(entry => {
+      // Use definitionId as part of the key
+      actualEntriesMap.set(`${entry.definitionId}_${new Date(entry.date).toISOString().split('T')[0]}`, entry);
+    });
+
+    // Combine general and active temporary items, linking with actual entries
+    const combinedItems: CombinedScheduleItem[] = [
+      ...generalScheduleItems.map(item => ({
+        ...item,
+        definitionId: item._id, // Use _id as definitionId for general items
+        isTemporary: false,
+      })),
+      ...activeTemporaryItems.map(item => ({
+        ...item,
+        definitionId: item._id, // Use _id as definitionId for temporary definitions
+        isTemporary: true,
+        createdAt: item.createdAt, // Include createdAt for temporary items
+      })),
+    ];
+
+    // Sort items: general first, then temporary by createdAt (or other relevant field)
+    combinedItems.sort((a, b) => {
+      if (a.isTemporary && !b.isTemporary) return 1;
+      if (!a.isTemporary && b.isTemporary) return -1;
+      // For items of the same type, sort by description or another field if needed
+      // For temporary items, maybe sort by startDate or createdAt?
+      if (a.isTemporary && b.isTemporary) {
+        // If both are temporary, sort by createdAt
+        const aCreatedAt = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bCreatedAt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return aCreatedAt - bCreatedAt;
+      }
+      // This part should not be reached if items are only general or temporary
+      return 0; // Should not happen
+    });
+
+    // Augment combined items with status and reason from actual entries
+    const displayItems: CombinedScheduleItem[] = combinedItems.map(item => {
+      const entryKey = `${item.definitionId}_${selectedDateUTC.toISOString().split('T')[0]}`;
+      const actualEntry = actualEntriesMap.get(entryKey);
+      return {
+        ...item,
+        status: actualEntry?.status,
+        reason: actualEntry?.reason,
+        actualEntryId: actualEntry?._id, // Keep track of the actual entry ID if it exists
+      };
+    });
+
+    return displayItems;
+  }, [selectedDate, generalScheduleItems, temporaryScheduleDefinitions, scheduleItems]);
 
   if (loading && generalScheduleItems.length === 0) return (
     <div className="flex flex-col items-center min-h-screen bg-dark-bg text-gray-200 p-8 pt-16 text-center">
       <button onClick={() => router.back()} className="absolute top-8 left-8 text-gray-400 hover:text-white transition duration-300 ease-in-out text-lg">
-        &larr; Назад
+        Назад
       </button>
       Загрузка данных пользователя...
     </div>
@@ -182,7 +284,7 @@ const UserSchedulePage = () => {
         onClick={() => router.back()}
         className="absolute top-8 left-8 text-gray-400 hover:text-white transition duration-300 ease-in-out text-lg"
       >
-        &larr; Назад
+        Назад
       </button>
       <div className="bg-red-900 bg-opacity-30 border border-red-700 text-red-300 px-6 py-4 rounded-md relative mb-8 w-full max-w-3xl text-center">
         <span className="block sm:inline">Ошибка: {error}</span>
@@ -197,7 +299,7 @@ const UserSchedulePage = () => {
           onClick={() => router.back()}
           className="fixed top-4 left-4 text-base sm:top-8 sm:left-8 sm:text-lg text-gray-400 hover:text-white transition duration-300 ease-in-out z-10"
         >
-          &larr; Назад
+          Назад
         </button>
 
         <h1 className="text-5xl font-extrabold text-white mb-12 text-center">Расписание {username}</h1>
@@ -220,15 +322,14 @@ const UserSchedulePage = () => {
         ) : (
           <div className="space-y-2 w-full max-w-3xl mx-auto shadow-lg rounded-xl p-6 border-2 border-gray-700" style={{ background: 'radial-gradient(circle at top left, rgba(20, 25, 35, 1) 0%, rgba(5, 10, 20, 1) 100%)' }}>
             <ul className="space-y-3">
-              {generalScheduleItems.map((generalItem) => {
-                const scheduleItem = getScheduleItemForSelectedDay(generalItem.description);
-                const status = scheduleItem?.status;
+              {itemsToDisplay().map((item) => {
+                const status = item.status;
 
                 return (
-                  <li key={generalItem._id} className="bg-gray-800 bg-opacity-50 p-3 rounded-lg flex flex-col border border-gray-700">
+                  <li key={item.definitionId} className="bg-gray-800 bg-opacity-50 p-3 rounded-lg flex flex-col border border-gray-700">
                     <div className="flex items-center">
                       <span className="text-gray-200 text-base font-medium overflow-wrap break-word flex-1 min-w-0">
-                        {generalItem.description}
+                        {item.description}
                       </span>
                       <div className="flex items-center space-x-2 ml-4">
                         <div
@@ -245,10 +346,10 @@ const UserSchedulePage = () => {
                       </div>
                     </div>
 
-                    {status === 'not_completed' && scheduleItem?.reason && (
+                    {status === 'not_completed' && item.reason && (
                       <div className="mt-2">
                         <p className="text-gray-300 text-sm italic">
-                          Причина: {scheduleItem.reason}
+                          Причина: {item.reason}
                         </p>
                       </div>
                     )}

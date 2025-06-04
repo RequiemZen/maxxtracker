@@ -40,6 +40,10 @@ const ScheduleItemSchema = new mongoose_1.default.Schema({
         ref: 'User',
         required: true,
     },
+    definitionId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        required: true,
+    },
     description: {
         type: String,
         required: true,
@@ -50,13 +54,12 @@ const ScheduleItemSchema = new mongoose_1.default.Schema({
     },
     status: {
         type: String,
-        required: false,
         enum: ['completed', 'not_completed'],
+        required: false,
     },
     reason: {
         type: String,
         required: false,
-        maxlength: 40,
     },
     createdAt: {
         type: Date,

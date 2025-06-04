@@ -42,6 +42,7 @@ router.post('/', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 
 router.get('/', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
+        // Fetch general schedule items for the user and sort by creation date
         const generalScheduleItems = yield GeneralScheduleItem_1.default.find({ user: (_a = req.user) === null || _a === void 0 ? void 0 : _a.id }).sort({ createdAt: 1 });
         res.json(generalScheduleItems);
     }
@@ -64,10 +65,10 @@ router.delete('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, 
             return res.status(404).json({ msg: 'Schedule item not found' });
         }
         // --- Add logic here to delete related ScheduleItems ---
-        // Find all ScheduleItems that match the deleted general item's description for this user
+        // Теперь удаляем записи ScheduleItem, связанные по definitionId с удаленным общим пунктом
         yield ScheduleItem_1.default.deleteMany({
             user: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id,
-            description: generalScheduleItem.description, // Use the description from the deleted general item
+            definitionId: generalScheduleItem._id, // Используем _id удаленного общего пункта
         });
         // ----------------------------------------------------
         res.json({ msg: 'Schedule item removed' });

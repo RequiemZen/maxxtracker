@@ -76,7 +76,7 @@ const HomePage = () => {
         <Link href="/setup" className="block w-full h-full">
           <div className={`${baseButtonClasses} border border-gray-700 hover:border-blue-500`} style={{ background: gradient1 }}>
             {/* Reduced font size for title */}
-            <h2 className="text-xl font-semibold mb-3 text-white">Составить общий распорядок дня</h2>
+            <h2 className="text-xl font-semibold mb-3 text-white">Управление пунктами распорядка дня</h2>
             {/* Reduced font size for description */}
             <p className="text-base text-gray-400">Настройте ваши повторяющиеся задачи и цели.</p>
           </div>
