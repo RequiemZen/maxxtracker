@@ -44,6 +44,16 @@ const GeneralScheduleItemSchema = new mongoose_1.default.Schema({
         type: String,
         required: true,
     },
+    weekDays: {
+        type: [Number],
+        default: undefined, // Если не указано, значит пункт показывается на все дни
+        validate: {
+            validator: function (v) {
+                return v.every(day => day >= 0 && day <= 6);
+            },
+            message: 'Week days must be numbers from 0 to 6'
+        }
+    },
     createdAt: {
         type: Date,
         default: Date.now,

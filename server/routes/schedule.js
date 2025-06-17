@@ -56,7 +56,7 @@ router.get('/', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 0
         }
         const startDateUTC = new Date(start_date);
         const endDateUTC = new Date(end_date);
-        const generalItems = yield GeneralScheduleItem_1.default.find({ user: targetUserId }).select('_id description');
+        const generalItems = yield GeneralScheduleItem_1.default.find({ user: targetUserId }).select('_id description weekDays');
         const temporaryDefinitions = yield TemporaryScheduleItem_1.default.find({
             user: targetUserId,
             startDate: { $lte: endDateUTC },

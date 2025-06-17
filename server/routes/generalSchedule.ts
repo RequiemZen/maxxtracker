@@ -15,12 +15,13 @@ interface AuthenticatedRequest extends Request {
 // @desc    Create a general schedule item
 // @access  Private
 router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  const { description } = req.body;
+  const { description, weekDays } = req.body;
 
   try {
     const newGeneralScheduleItem = new GeneralScheduleItem({
       user: req.user?.id,
       description,
+      weekDays: weekDays && weekDays.length > 0 ? weekDays : undefined,
     });
 
     const generalScheduleItem = await newGeneralScheduleItem.save();
@@ -83,7 +84,7 @@ router.delete('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Res
 // @desc    Update a general schedule item
 // @access  Private
 router.put('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  const { description } = req.body;
+  const { description, weekDays } = req.body;
 
   try {
     let generalScheduleItem = await GeneralScheduleItem.findOne({
@@ -99,6 +100,8 @@ router.put('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Respon
     const oldDescription = generalScheduleItem.description;
 
     generalScheduleItem.description = description;
+    // Обновляем weekDays, если они предоставлены. Если пустой массив, сохраняем как undefined.
+    generalScheduleItem.weekDays = weekDays && weekDays.length > 0 ? weekDays : undefined;
     await generalScheduleItem.save();
 
     // --- Update related ScheduleItems ---

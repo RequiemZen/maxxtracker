@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation'; // Import useRouter
 interface GeneralScheduleItem {
   _id: string;
   description: string;
+  weekDays?: number[]; // 0-6, где 0 - воскресенье, 6 - суббота
 }
 
 // Interface for Temporary Schedule Item Definition (as received from backend GET endpoint)
@@ -48,6 +49,17 @@ interface DisplayScheduleItem {
   actualEntryId?: string;
 }
 
+// Добавляем функцию для получения userId из JWT токена
+function getUserIdFromToken(token: string | null): string | null {
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.user?.id || null;
+  } catch {
+    return null;
+  }
+}
+
 const CheckinPage = () => {
   const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
   // scheduleItems state will now hold the combined list for display on selectedDate
@@ -55,11 +67,13 @@ const CheckinPage = () => {
   const [loading, setLoading] = useState(true);
   const [editingReason, setEditingReason] = useState<string | null>(null);
   const [tempReason, setTempReason] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
 
-  const fetchScheduleItemsForDate = useCallback(async (date: Date) => {
+  const fetchScheduleItems = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -69,95 +83,103 @@ const CheckinPage = () => {
         return;
       }
 
-      const startOfSelectedDayUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      const endOfSelectedDayUTC = new Date(startOfSelectedDayUTC);
-      endOfSelectedDayUTC.setDate(endOfSelectedDayUTC.getDate() + 1);
+      // Получаем userId из токена
+      const userId = getUserIdFromToken(token);
 
-      // 1. Fetch ALL General Schedule Items for the user (to maintain order)
-      const generalItemsRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule`, {
+      // Получаем общие пункты
+      const generalRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule`, {
         headers: { 'x-auth-token': token },
-        // Assuming general-schedule endpoint is secured and returns items for authenticated user
-        // If fetching for another user, add params: { userId: targetUserId }
       });
-      const generalItems: GeneralScheduleItem[] = generalItemsRes.data;
 
-      // 2. Fetch ALL Temporary Schedule Item Definitions for the user
-      const temporaryDefsRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule/temporary`, {
+      // Получаем временные определения
+      const temporaryRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule/temporary`, {
         headers: { 'x-auth-token': token },
-        // Assuming schedule/temporary GET endpoint is secured and returns items for authenticated user
-        // If fetching for another user, add params: { userId: targetUserId }
       });
-      const temporaryDefinitions: TemporaryScheduleDefinition[] = temporaryDefsRes.data;
 
-      // 3. Fetch Actual Schedule Item Entries (check-ins) for the user on the selected date
-      const actualEntriesRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/schedule`, {
-        headers: { 'x-auth-token': token },
-        params: {
-          start_date: startOfSelectedDayUTC.toISOString(),
-          end_date: endOfSelectedDayUTC.toISOString(),
+      // Получаем фактические записи для выбранной даты
+      const selectedDateUTC = new Date(Date.UTC(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate()
+      ));
+      const endDateUTC = new Date(selectedDateUTC);
+      endDateUTC.setDate(endDateUTC.getDate() + 1);
+
+      // Добавляем userId в параметры запроса и корректный диапазон дат
+      const scheduleRes = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/schedule?userId=${userId}&start_date=${selectedDateUTC.toISOString()}&end_date=${endDateUTC.toISOString()}`,
+        {
+          headers: { 'x-auth-token': token },
         }
-      });
-      const { actualEntries } = actualEntriesRes.data; // Извлекаем actualEntries из ответа
+      );
 
-      // Combine and format the results for display
-      const itemsToDisplay: DisplayScheduleItem[] = [];
-      // Используем Map для сопоставления actualEntries по definitionId
-      const actualEntriesMap = new Map<string, ActualScheduleEntry>();
-
-      actualEntries.forEach((entry: ActualScheduleEntry) => {
-        // Используем definitionId в качестве ключа
-        actualEntriesMap.set(entry.definitionId, entry);
+      // Фильтруем общие пункты по дням недели
+      const filteredGeneralItems = generalRes.data.filter((item: GeneralScheduleItem) => {
+        if (!item.weekDays || item.weekDays.length === 0) {
+          return true; // Если дни недели не указаны, показываем на все дни
+        }
+        const dayOfWeek = selectedDate.getDay(); // 0-6, где 0 - воскресенье
+        return item.weekDays.includes(dayOfWeek);
       });
 
-      // Добавляем General Schedule Items в список отображения
-      generalItems.forEach(item => {
-        const actualEntry = actualEntriesMap.get(item._id); // Ищем запись по definitionId
-        itemsToDisplay.push({
+      // Объединяем отфильтрованные общие пункты с временными
+      const combinedItems: DisplayScheduleItem[] = [
+        ...filteredGeneralItems.map((item: GeneralScheduleItem) => ({
           definitionId: item._id,
           description: item.description,
           isTemporary: false,
-          status: actualEntry?.status,
+        })),
+        ...temporaryRes.data
+          .filter((item: TemporaryScheduleDefinition) => {
+            const startDate = new Date(item.startDate);
+            const endDate = new Date(item.endDate);
+            return selectedDateUTC >= startDate && selectedDateUTC <= endDate;
+          })
+          .map((item: TemporaryScheduleDefinition) => ({
+            definitionId: item._id,
+            description: item.description,
+            isTemporary: true,
+          })),
+      ];
+
+      // Сортируем по времени создания для временных пунктов
+      combinedItems.sort((a, b) => {
+        if (a.isTemporary && b.isTemporary) {
+          const aDate = new Date(temporaryRes.data.find((item: TemporaryScheduleDefinition) => item._id === a.definitionId)?.createdAt || 0);
+          const bDate = new Date(temporaryRes.data.find((item: TemporaryScheduleDefinition) => item._id === b.definitionId)?.createdAt || 0);
+          return aDate.getTime() - bDate.getTime();
+        }
+        return 0;
+      });
+
+      // Объединяем с фактическими записями
+      const actualEntries = scheduleRes.data.actualEntries || [];
+      const displayItems = combinedItems.map(item => {
+        const actualEntry = actualEntries.find(
+          (entry: ActualScheduleEntry) =>
+            entry.definitionId === item.definitionId &&
+            new Date(entry.date).toISOString().split('T')[0] === selectedDateUTC.toISOString().split('T')[0]
+        );
+        return {
+          ...item,
+          status: actualEntry?.status || null,
           reason: actualEntry?.reason,
           actualEntryId: actualEntry?._id,
-        });
+        };
       });
-
-      // Добавляем Temporary Schedule Items, активные на выбранную дату
-      temporaryDefinitions.forEach(def => {
-        const defStartDateUTC = new Date(def.startDate);
-        const defEndDateUTC = new Date(def.endDate);
-
-        // Проверяем, попадает ли выбранная дата в диапазон (включая конечную дату)
-        if (startOfSelectedDayUTC >= defStartDateUTC && startOfSelectedDayUTC <= defEndDateUTC) {
-          const actualEntry = actualEntriesMap.get(def._id); // Ищем запись по definitionId
-          itemsToDisplay.push({
-            definitionId: def._id,
-            description: def.description,
-            isTemporary: true,
-            status: actualEntry?.status,
-            reason: actualEntry?.reason,
-            actualEntryId: actualEntry?._id,
-          });
-        }
-      });
-
-      // Теперь список itemsToDisplay содержит все пункты (общие и временные),
-      // активные на выбранную дату, с присоединенными данными из actualEntries.
-      // Они добавлены в порядке: сначала общие, затем временные по дате создания.
-      // Если нужны другие порядки сортировки, их нужно применить здесь.
-
-      setScheduleItems(itemsToDisplay);
-
+      setScheduleItems(displayItems);
     } catch (err: any) {
-      console.error('Error fetching schedule items for date:', err.response?.data || err.message);
+      console.error(err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
         localStorage.setItem('sessionExpired', 'true');
         router.push('/auth');
+      } else {
+        setError(err.response?.data?.msg || err.message || 'Failed to fetch schedule items.');
       }
     } finally {
       setLoading(false);
     }
-  }, [router, setLoading, setScheduleItems]);
+  }, [selectedDate, router]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -167,8 +189,8 @@ const CheckinPage = () => {
       setLoading(false);
       return;
     }
-    fetchScheduleItemsForDate(selectedDate);
-  }, [selectedDate, router, fetchScheduleItemsForDate]);
+    fetchScheduleItems();
+  }, [selectedDate, router, fetchScheduleItems]);
 
 
   // handleCheckInToggle needs significant changes to work with the new DisplayScheduleItem structure

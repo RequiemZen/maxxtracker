@@ -22,11 +22,12 @@ const router = express_1.default.Router();
 // @access  Private
 router.post('/', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const { description } = req.body;
+    const { description, weekDays } = req.body;
     try {
         const newGeneralScheduleItem = new GeneralScheduleItem_1.default({
             user: (_a = req.user) === null || _a === void 0 ? void 0 : _a.id,
             description,
+            weekDays: weekDays && weekDays.length > 0 ? weekDays : undefined,
         });
         const generalScheduleItem = yield newGeneralScheduleItem.save();
         res.json(generalScheduleItem);
@@ -87,7 +88,7 @@ router.delete('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, 
 // @access  Private
 router.put('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    const { description } = req.body;
+    const { description, weekDays } = req.body;
     try {
         let generalScheduleItem = yield GeneralScheduleItem_1.default.findOne({
             _id: req.params.id,
@@ -99,6 +100,8 @@ router.put('/:id', authMiddleware_1.default, (req, res) => __awaiter(void 0, voi
         // Store old description before updating
         const oldDescription = generalScheduleItem.description;
         generalScheduleItem.description = description;
+        // Обновляем weekDays, если они предоставлены. Если пустой массив, сохраняем как undefined.
+        generalScheduleItem.weekDays = weekDays && weekDays.length > 0 ? weekDays : undefined;
         yield generalScheduleItem.save();
         // --- Update related ScheduleItems ---
         // Find all ScheduleItems that match the old description for this user and update them

@@ -12,6 +12,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 interface GeneralScheduleItem {
   _id: string;
   description: string;
+  weekDays?: number[]; // 0-6, где 0 - воскресенье, 6 - суббота
 }
 
 interface TemporaryScheduleDefinition {
@@ -33,10 +34,12 @@ const SetupPage = () => {
   // State for editing general items
   const [editingItem, setEditingItem] = useState<GeneralScheduleItem | null>(null);
   const [editedDescription, setEditedDescription] = useState('');
+  const [editedWeekDays, setEditedWeekDays] = useState<number[]>([]);
 
   // State for adding new items
   const [addingItemType, setAddingItemType] = useState<'none' | 'general' | 'temporary'>('none');
   const [newItemDescription, setNewItemDescription] = useState('');
+  const [newItemWeekDays, setNewItemWeekDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [newTemporaryStartDate, setNewTemporaryStartDate] = useState<Date>(startOfDay(new Date()));
   const [newTemporaryEndDate, setNewTemporaryEndDate] = useState<Date>(startOfDay(new Date()));
 
@@ -52,6 +55,17 @@ const SetupPage = () => {
   const [editedTemporaryDescription, setEditedTemporaryDescription] = useState('');
   const [editedTemporaryStartDate, setEditedTemporaryStartDate] = useState<Date>(startOfDay(new Date()));
   const [editedTemporaryEndDate, setEditedTemporaryEndDate] = useState<Date>(startOfDay(new Date()));
+
+  // Новый порядок дней недели: Пн (1), Вт (2), Ср (3), Чт (4), Пт (5), Сб (6), Вс (0)
+  const weekDaysLabels = [
+    { label: 'Пн', index: 1 },
+    { label: 'Вт', index: 2 },
+    { label: 'Ср', index: 3 },
+    { label: 'Чт', index: 4 },
+    { label: 'Пт', index: 5 },
+    { label: 'Сб', index: 6 },
+    { label: 'Вс', index: 0 },
+  ];
 
   const fetchScheduleItems = useCallback(async () => {
     setLoading(true);
@@ -107,6 +121,7 @@ const SetupPage = () => {
     setAddingItemType('general');
     setInputError(null);
     setNewItemDescription('');
+    setNewItemWeekDays([0, 1, 2, 3, 4, 5, 6]);
   };
 
   const onAddTemporaryClick = () => {
@@ -121,6 +136,7 @@ const SetupPage = () => {
     setAddingItemType('none');
     setInputError(null);
     setNewItemDescription('');
+    setNewItemWeekDays([]);
     setNewTemporaryStartDate(startOfDay(new Date()));
     setNewTemporaryEndDate(startOfDay(new Date()));
   };
@@ -140,15 +156,22 @@ const SetupPage = () => {
         router.push('/auth');
         return;
       }
-      // Assuming general schedule items don't need a specific date beyond creation for now
-      // If they do, we might need to revisit this.
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule`, { description: newItemDescription }, {
-        headers: {
-          'x-auth-token': token,
+
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule`,
+        {
+          description: newItemDescription,
+          weekDays: newItemWeekDays.length > 0 ? newItemWeekDays : undefined
         },
-      });
+        {
+          headers: {
+            'x-auth-token': token,
+          },
+        }
+      );
       setGeneralScheduleItems([...generalScheduleItems, res.data]);
       setNewItemDescription('');
+      setNewItemWeekDays([]);
       setAddingItemType('none');
       setError(null);
     } catch (err: any) {
@@ -244,35 +267,26 @@ const SetupPage = () => {
   const onEditClick = (item: GeneralScheduleItem) => {
     setEditingItem(item);
     setEditedDescription(item.description);
-    setInputError(null); // Clear input error when starting edit
+    setEditedWeekDays(item.weekDays || []);
+    setInputError(null);
   };
 
   const onCancelEdit = () => {
     setEditingItem(null);
     setEditedDescription('');
-    setInputError(null); // Clear input error on cancel
+    setEditedWeekDays([]);
+    setInputError(null);
   };
 
   const onSaveEdit = async () => {
+    if (!editingItem) return;
+
     if (!editedDescription.trim()) {
       setInputError('Пожалуйста, введите описание пункта.');
       return;
     }
-    if (editedDescription.trim() === editingItem?.description.trim()) {
-      // No change, just exit edit mode
-      setEditingItem(null);
-      setEditedDescription('');
-      setInputError(null);
-      return;
-    }
 
-    const isDuplicate = generalScheduleItems.some(item =>
-      item._id !== editingItem?._id && item.description.toLowerCase() === editedDescription.trim().toLowerCase()
-    );
-    if (isDuplicate) {
-      setInputError('Пункт с таким описанием уже существует. Пожалуйста, выберите другое название.');
-      return;
-    }
+    setInputError(null);
 
     try {
       const token = localStorage.getItem('token');
@@ -281,22 +295,35 @@ const SetupPage = () => {
         router.push('/auth');
         return;
       }
-      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule/${editingItem?._id}`, { description: editedDescription }, {
-        headers: {
-          'x-auth-token': token,
+
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/general-schedule/${editingItem._id}`,
+        {
+          description: editedDescription,
+          weekDays: editedWeekDays.length > 0 ? editedWeekDays : undefined
         },
-      });
-      setGeneralScheduleItems(generalScheduleItems.map(item => item._id === res.data._id ? res.data : item));
+        {
+          headers: {
+            'x-auth-token': token,
+          },
+        }
+      );
+
+      setGeneralScheduleItems(
+        generalScheduleItems.map(item =>
+          item._id === editingItem._id ? res.data : item
+        )
+      );
       setEditingItem(null);
       setEditedDescription('');
-      setError(null); // Clear general error on success
+      setEditedWeekDays([]);
+      setError(null);
     } catch (err: any) {
       console.error(err.response?.data || err.message);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
         localStorage.setItem('sessionExpired', 'true');
         router.push('/auth');
       } else {
-        // Use inputError for feedback related to the specific edit attempt
         setInputError(err.response?.data?.msg || err.message || 'Failed to update schedule item.');
       }
     }
@@ -465,6 +492,30 @@ const SetupPage = () => {
                 maxLength={80}
                 className="w-full px-3 sm:px-4 py-3 text-sm sm:text-base bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition duration-300 ease-in-out"
               />
+              {addingItemType === 'general' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Дни недели:</label>
+                  <div className="flex flex-wrap gap-2">
+                    {weekDaysLabels.map(({ label, index }) => (
+                      <label key={label} className="inline-flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={newItemWeekDays.includes(index)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewItemWeekDays([...newItemWeekDays, index]);
+                            } else {
+                              setNewItemWeekDays(newItemWeekDays.filter(d => d !== index));
+                            }
+                          }}
+                          className="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded"
+                        />
+                        <span className="ml-2 text-gray-300">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
               {addingItemType === 'temporary' && (
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                   <div className="flex items-center gap-4">
@@ -569,6 +620,28 @@ const SetupPage = () => {
                             maxLength={80}
                             className="w-full px-3 sm:px-4 py-3 text-sm sm:text-base bg-transparent text-white placeholder-gray-500 focus:outline-none placeholder:text-xs sm:placeholder:text-sm"
                           />
+                        </div>
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Дни недели:</label>
+                          <div className="flex flex-wrap gap-2">
+                            {weekDaysLabels.map(({ label, index }) => (
+                              <label key={label} className="inline-flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={editedWeekDays.includes(index)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setEditedWeekDays([...editedWeekDays, index]);
+                                    } else {
+                                      setEditedWeekDays(editedWeekDays.filter(d => d !== index));
+                                    }
+                                  }}
+                                  className="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded"
+                                />
+                                <span className="ml-2 text-gray-300">{label}</span>
+                              </label>
+                            ))}
+                          </div>
                         </div>
                         {inputError && editingItem && <p className="text-red-500 text-sm mt-2">{inputError}</p>}
                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-2 sm:mt-0 w-full sm:w-auto">

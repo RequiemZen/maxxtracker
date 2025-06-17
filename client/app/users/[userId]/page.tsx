@@ -11,6 +11,7 @@ import { useRouter, useParams } from 'next/navigation'; // Import useRouter and 
 interface GeneralScheduleItem {
   _id: string;
   description: string;
+  weekDays?: number[];
 }
 
 interface ScheduleItem {
@@ -208,6 +209,14 @@ const UserSchedulePage = () => {
   const itemsToDisplay = useCallback((): CombinedScheduleItem[] => {
     const selectedDateUTC = new Date(Date.UTC(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()));
 
+    // Фильтруем общие пункты по дням недели
+    const filteredGeneralItems = generalScheduleItems.filter(item => {
+      // Если нет weekDays или он пустой — показываем на все дни
+      if (!item.weekDays || item.weekDays.length === 0) return true;
+      const dayOfWeek = selectedDate.getDay(); // 0 - воскресенье, 1 - понедельник, ...
+      return item.weekDays.includes(dayOfWeek);
+    });
+
     // Filter temporary definitions active on the selected date
     const activeTemporaryItems = temporaryScheduleDefinitions.filter(def => {
       const startDateUTC = new Date(def.startDate);
@@ -224,9 +233,9 @@ const UserSchedulePage = () => {
       actualEntriesMap.set(`${entry.definitionId}_${new Date(entry.date).toISOString().split('T')[0]}`, entry);
     });
 
-    // Combine general and active temporary items, linking with actual entries
+    // Combine filtered general and active temporary items, linking with actual entries
     const combinedItems: CombinedScheduleItem[] = [
-      ...generalScheduleItems.map(item => ({
+      ...filteredGeneralItems.map(item => ({
         ...item,
         definitionId: item._id, // Use _id as definitionId for general items
         isTemporary: false,
@@ -337,7 +346,7 @@ const UserSchedulePage = () => {
                           ${status === 'completed' ? 'bg-green-600 text-white'
                               : status === 'not_completed' ? 'bg-red-600 text-white'
                                 : 'bg-gray-600 text-white'}
-                          `}
+                    `}
                         >
                           {status === 'completed' && '✓'}
                           {status === 'not_completed' && '✕'}

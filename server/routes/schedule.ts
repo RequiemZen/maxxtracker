@@ -55,7 +55,7 @@ router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response)
     const startDateUTC = new Date(start_date as string);
     const endDateUTC = new Date(end_date as string);
 
-    const generalItems = await GeneralScheduleItem.find({ user: targetUserId }).select('_id description');
+    const generalItems = await GeneralScheduleItem.find({ user: targetUserId }).select('_id description weekDays');
 
     const temporaryDefinitions = await TemporaryScheduleItem.find({
       user: targetUserId,
