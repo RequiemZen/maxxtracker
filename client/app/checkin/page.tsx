@@ -67,7 +67,7 @@ const CheckinPage = () => {
   const [loading, setLoading] = useState(true);
   const [editingReason, setEditingReason] = useState<string | null>(null);
   const [tempReason, setTempReason] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   const router = useRouter();
 
